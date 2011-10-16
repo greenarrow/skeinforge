@@ -245,11 +245,11 @@ class SpeedSkein:
 			if firstWord == '(<layerThickness>':
 				self.layerThickness = float(splitLine[1])
 			elif firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> speed </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('speed')
 				return
 			elif firstWord == '(<perimeterWidth>':
 				self.absolutePerimeterWidth = abs(float(splitLine[1]))
-				self.distanceFeedRate.addTagBracketedLine('maximumZFeedRatePerSecond', self.repository.maximumZFeedRatePerSecond.value )
+				self.distanceFeedRate.addTagBracketedLine('maximumZTravelFeedRatePerSecond', self.repository.maximumZFeedRatePerSecond.value )
 				self.distanceFeedRate.addTagBracketedLine('operatingFeedRatePerSecond', self.feedRatePerSecond )
 				if self.repository.addFlowRate.value:
 					self.distanceFeedRate.addTagBracketedLine('operatingFlowRate', self.repository.flowRateSetting.value )

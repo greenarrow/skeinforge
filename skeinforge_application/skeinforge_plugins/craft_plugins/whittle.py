@@ -120,7 +120,7 @@ class WhittleSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addTagBracketedLine('procedureName', 'whittle')
+				self.distanceFeedRate.addTagBracketedProcedure('whittle')
 				return
 			elif firstWord == '(<layerThickness>':
 				self.setLayerThinknessVerticalDeltas(splitLine)

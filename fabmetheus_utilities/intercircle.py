@@ -300,6 +300,10 @@ def getCircleNodesFromLoop(loop, radius, thresholdRatio=0.9):
 
 def getCircleNodesFromPoints(points, radius):
 	'Get the circle nodes from a path.'
+	if radius == 0.0:
+		print('Warning, radius is 0 in getCircleNodesFromPoints in intercircle.')
+		print(points)
+		return []
 	circleNodes = []
 	oneOverRadius = 1.000001 / radius # to avoid problem of accidentally integral radius
 	points = euclidean.getAwayPoints(points, radius)
@@ -409,6 +413,10 @@ def getLoopsFromLoopsDirection( isWiddershins, loops ):
 
 def getPointsFromLoop(loop, radius, thresholdRatio=0.9):
 	'Get the points from every point on a loop and between points.'
+	if radius == 0.0:
+		print('Warning, radius is 0 in getPointsFromLoop in intercircle.')
+		print(loop)
+		return loop
 	radius = abs(radius)
 	points = []
 	for pointIndex in xrange(len(loop)):

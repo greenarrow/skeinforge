@@ -204,7 +204,7 @@ class ChamberSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> chamber </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('chamber')
 				return
 			self.distanceFeedRate.addLine(line)
 

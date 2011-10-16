@@ -182,7 +182,7 @@ class WidenSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addTagBracketedLine('procedureName', 'widen')
+				self.distanceFeedRate.addTagBracketedProcedure('widen')
 			elif firstWord == '(<crafting>)':
 				self.distanceFeedRate.addLine(line)
 				return

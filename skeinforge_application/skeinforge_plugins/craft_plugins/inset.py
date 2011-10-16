@@ -370,7 +370,7 @@ class InsetSkein:
 				self.distanceFeedRate.addTagBracketedLine(
 					'bridgeWidthMultiplier', self.distanceFeedRate.getRounded( self.repository.bridgeWidthMultiplier.value ) )
 			elif firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addTagBracketedLine('procedureName', 'inset')
+				self.distanceFeedRate.addTagBracketedProcedure('inset')
 				return
 			elif firstWord == '(<perimeterWidth>':
 				self.perimeterWidth = float(splitLine[1])

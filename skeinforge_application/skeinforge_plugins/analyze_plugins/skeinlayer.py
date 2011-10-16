@@ -1,6 +1,6 @@
 """
 This page is in the table of contents.
-Skeinlayer is a script to display each layer of a gcode file.
+Skeinlayer is an analyze viewer to display each layer of a gcode file.
 
 The skeinlayer manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skeinlayer

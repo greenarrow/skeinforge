@@ -354,7 +354,7 @@ class StretchSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> stretch </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('stretch')
 				return
 			elif firstWord == '(<perimeterWidth>':
 				perimeterWidth = float(splitLine[1])

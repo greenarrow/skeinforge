@@ -188,7 +188,7 @@ class JitterSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> jitter </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('jitter')
 				return
 			elif firstWord == '(<operatingFeedRatePerSecond>':
 				self.operatingFeedRatePerMinute = 60.0 * float(splitLine[1])

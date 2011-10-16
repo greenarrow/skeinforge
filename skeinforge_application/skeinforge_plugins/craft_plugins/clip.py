@@ -14,6 +14,8 @@ Default is 0.2.
 
 Defines the ratio of the amount each end of the loop is clipped over the perimeter width.  The total gap will therefore be twice the clip.  If the ratio is too high loops will have a gap, if the ratio is too low there will be a bulge at the loop ends.
 
+This setting will affect the output of clip, and the output of the skin.  In skin the half width perimeters will be clipped by according to this setting.
+
 ===Maximum Connection Distance Over Perimeter Width===
 Default is ten.
 
@@ -261,7 +263,7 @@ class ClipSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> clip </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('clip')
 				return
 			elif firstWord == '(<perimeterWidth>':
 				self.distanceFeedRate.addTagBracketedLine('clipOverPerimeterWidth', clipRepository.clipOverPerimeterWidth.value)

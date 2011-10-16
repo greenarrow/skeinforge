@@ -180,7 +180,7 @@ class HopSkein:
 				self.hopDistance = self.hopHeight / self.minimumSlope
 				self.minimumDistance = 0.5 * layerThickness
 			elif firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> hop </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('hop')
 				return
 			self.distanceFeedRate.addLine(line)
 

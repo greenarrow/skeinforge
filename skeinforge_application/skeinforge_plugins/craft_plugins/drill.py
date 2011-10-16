@@ -200,7 +200,7 @@ class DrillSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> drill </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('drill')
 				return
 			elif firstWord == '(<layerThickness>':
 				self.halfLayerThickness = 0.5 * float(splitLine[1])

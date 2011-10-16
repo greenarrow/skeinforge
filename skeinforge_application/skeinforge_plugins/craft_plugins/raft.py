@@ -928,7 +928,7 @@ class RaftSkein:
 			elif firstWord == '(<coolingRate>':
 				self.coolingRate = float(splitLine[1])
 			elif firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> raft </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('raft')
 			elif firstWord == '(<heatingRate>':
 				self.heatingRate = float(splitLine[1])
 			elif firstWord == '(<interfaceTemperature>':

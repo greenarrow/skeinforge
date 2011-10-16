@@ -165,7 +165,7 @@ class UnpauseSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> unpause </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('unpause')
 				return
 			self.distanceFeedRate.addLine(line)
 

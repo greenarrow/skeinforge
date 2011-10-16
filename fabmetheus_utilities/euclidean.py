@@ -65,8 +65,7 @@ def addElementToListDictionaryIfNotThere(element, key, listDictionary):
 
 def addElementToPixelList( element, pixelDictionary, x, y ):
 	'Add an element to the pixel list.'
-	stepKey = getStepKey(x, y)
-	addElementToListDictionary( element, stepKey, pixelDictionary )
+	addElementToListDictionary( element, (x, y), pixelDictionary )
 
 def addElementToPixelListFromPoint( element, pixelDictionary, point ):
 	'Add an element to the pixel list.'
@@ -123,16 +122,12 @@ def addPixelTableToPixelTable( fromPixelTable, intoPixelTable ):
 	for fromPixelTableKey in fromPixelTable.keys():
 		intoPixelTable[ fromPixelTableKey ] = fromPixelTable[ fromPixelTableKey ]
 
-def addPixelToPixelTable( pixelDictionary, value, x, y ):
-	'Add pixel to the pixel table.'
-	pixelDictionary[getStepKey(x, y)] = value
-
 def addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, value, x, y ):
 	'Add pixels to the pixel table with steepness.'
 	if isSteep:
-		addPixelToPixelTable( pixelDictionary, value, y, x )
+		pixelDictionary[(y, x)] = value
 	else:
-		addPixelToPixelTable( pixelDictionary, value, x, y )
+		pixelDictionary[(x, y)] = value
 
 def addPointToPath( path, pixelDictionary, point, value, width ):
 	'Add a point to a path and the pixel table.'
@@ -183,12 +178,20 @@ def addSegmentToPixelTable( beginComplex, endComplex, pixelDictionary, shortenDi
 	xBegin = int(round(beginComplex.real))
 	xEnd = int(round(endComplex.real))
 	yIntersection = beginComplex.imag - beginComplex.real * gradient
-	addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, None, xBegin, int( round( beginComplex.imag ) ) )
-	addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, None, xEnd, int( round( endComplex.imag ) ) )
-	for x in xrange( xBegin + 1, xEnd ):
-		y = int( math.floor( yIntersection + x * gradient ) )
-		addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, None, x, y )
-		addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, None, x, y + 1 )
+	if isSteep:
+		pixelDictionary[( int( round( beginComplex.imag ) ), xBegin)] = None
+		pixelDictionary[( int( round( endComplex.imag ) ), xEnd )] = None
+		for x in xrange( xBegin + 1, xEnd ):
+			y = int( math.floor( yIntersection + x * gradient ) )
+			pixelDictionary[(y, x)] = None
+			pixelDictionary[(y + 1, x)] = None
+	else:
+		pixelDictionary[(xBegin, int( round( beginComplex.imag ) ) )] = None
+		pixelDictionary[(xEnd, int( round( endComplex.imag ) ) )] = None
+		for x in xrange( xBegin + 1, xEnd ):
+			y = int( math.floor( yIntersection + x * gradient ) )
+			pixelDictionary[(x, y)] = None
+			pixelDictionary[(x, y + 1)] = None
 
 def addSquareTwoToPixelDictionary(pixelDictionary, point, value, width):
 	'Add square with two pixels around the center to pixel dictionary.'
@@ -197,7 +200,7 @@ def addSquareTwoToPixelDictionary(pixelDictionary, point, value, width):
 	y = int(round(point.imag))
 	for xStep in xrange(x - 2, x + 3):
 		for yStep in xrange(y - 2, y + 3):
-			pixelDictionary[getStepKey(xStep, yStep)] = value
+			pixelDictionary[(xStep, yStep)] = value
 
 def addToThreadsFromLoop(extrusionHalfWidth, gcodeType, loop, oldOrderedLocation, skein):
 	'Add to threads from the last location from loop.'
@@ -245,12 +248,20 @@ def addValueSegmentToPixelTable( beginComplex, endComplex, pixelDictionary, valu
 	xBegin = int(round(beginComplex.real))
 	xEnd = int(round(endComplex.real))
 	yIntersection = beginComplex.imag - beginComplex.real * gradient
-	addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, value, xBegin, int( round( beginComplex.imag ) ) )
-	addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, value, xEnd, int( round( endComplex.imag ) ) )
-	for x in xrange( xBegin + 1, xEnd ):
-		y = int( math.floor( yIntersection + x * gradient ) )
-		addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, value, x, y )
-		addPixelToPixelTableWithSteepness( isSteep, pixelDictionary, value, x, y + 1 )
+	if isSteep:
+		pixelDictionary[(int( round( beginComplex.imag ) ), xBegin)] = value
+		pixelDictionary[(int( round( endComplex.imag ) ), xEnd)] = value
+		for x in xrange( xBegin + 1, xEnd ):
+			y = int( math.floor( yIntersection + x * gradient ) )
+			pixelDictionary[(y, x)] = value
+			pixelDictionary[(y + 1, x)] = value
+	else:
+		pixelDictionary[(xBegin, int( round( beginComplex.imag ) ))] = value
+		pixelDictionary[(xEnd, int( round( endComplex.imag ) ))] = value
+		for x in xrange( xBegin + 1, xEnd ):
+			y = int( math.floor( yIntersection + x * gradient ) )
+			pixelDictionary[(x, y)] = value
+			pixelDictionary[(x, y + 1)] = value
 
 def addValueToOutput(depth, keyInput, output, value):
 	'Add value to the output.'
@@ -459,19 +470,30 @@ def getAroundLoop(begin, end, loop):
 		aroundLoop.append(loop[pointIndex % len(loop)])
 	return aroundLoop
 
+def getAwayPath(path, radius):
+	'Get a path with only the points that are far enough away from each other, except for the last point.'
+	if len(path) < 2:
+		return path
+	lastPoint = path[-1]
+	awayPath = getAwayPoints(path, radius)
+	if len(awayPath) == 0:
+		return [lastPoint]
+	if abs(lastPoint - awayPath[-1]) > 0.001 * radius:
+		awayPath.append(lastPoint)
+	return awayPath
+
 def getAwayPoints(points, radius):
 	'Get a path with only the points that are far enough away from each other.'
-	away = []
+	awayPoints = []
 	oneOverOverlapDistance = 1000.0 / radius
 	pixelDictionary = {}
 	for point in points:
 		x = int(point.real * oneOverOverlapDistance)
 		y = int(point.imag * oneOverOverlapDistance)
 		if not getSquareIsOccupied(pixelDictionary, x, y):
-			away.append(point)
-			stepKey = getStepKey(x, y)
-			pixelDictionary[stepKey] = None
-	return away
+			awayPoints.append(point)
+			pixelDictionary[(x, y)] = None
+	return awayPoints
 
 def getBackOfLoops(loops):
 	'Get the back of the loops.'
@@ -1590,20 +1612,19 @@ def getSimplifiedPath(path, radius):
 		simplificationRadius += simplificationRadius
 		if oldPathLength == len(path):
 			if simplificationRadius > radius:
-				return getAwayPoints(path, radius)
+				return getAwayPath(path, radius)
 			else:
 				simplificationRadius *= 1.5
 		simplificationRadius = min(simplificationRadius, radius)
 		pointIndex += pointIndex
-	return getAwayPoints(path, radius)
+	return getAwayPath(path, radius)
 
 def getSquareIsOccupied( pixelDictionary, x, y ):
 	'Determine if a square around the x and y pixel coordinates is occupied.'
 	squareValues = []
 	for xStep in xrange(x - 1, x + 2):
 		for yStep in xrange(y - 1, y + 2):
-			stepKey = getStepKey(xStep, yStep)
-			if stepKey in pixelDictionary:
+			if (xStep, yStep) in pixelDictionary:
 				return True
 	return False
 
@@ -1618,7 +1639,7 @@ def getSquareValues( pixelDictionary, x, y ):
 	squareValues = []
 	for xStep in xrange(x - 1, x + 2):
 		for yStep in xrange(y - 1, y + 2):
-			stepKey = getStepKey(xStep, yStep)
+			stepKey = (xStep, yStep)
 			if stepKey in pixelDictionary:
 				squareValues += pixelDictionary[ stepKey ]
 	return squareValues
@@ -1626,10 +1647,6 @@ def getSquareValues( pixelDictionary, x, y ):
 def getSquareValuesFromPoint( pixelDictionary, point ):
 	'Get a list of the values in a square around the point.'
 	return getSquareValues(pixelDictionary, int(round(point.real)), int(round(point.imag)))
-
-def getStepKey(x, y):
-	'Get step key for x and y.'
-	return (x, y)
 
 def getStepKeyFromPoint(point):
 	'Get step key for the point.'
@@ -2331,6 +2348,9 @@ class NestedBand(NestedRing):
 		withinLoops = []
 		if penultimateFillLoops == None:
 			penultimateFillLoops = self.penultimateFillLoops
+		if penultimateFillLoops == None:
+			print('Warning, penultimateFillLoops == None in getFillLoops in NestedBand in euclidean.')
+			return fillLoops
 		for penultimateFillLoop in penultimateFillLoops:
 			if len(penultimateFillLoop) > 2:
 				if getIsInFilledRegion(surroundingBoundaries, penultimateFillLoop[0]):

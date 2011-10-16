@@ -173,11 +173,12 @@ class DimensionSkein:
 		self.travelFeedRatePerSecond = None
 		self.zDistanceRatio = 5.0
 
-	def addLinearMoveExtrusionDistanceLine( self, extrusionDistance ):
+	def addLinearMoveExtrusionDistanceLine(self, extrusionDistance):
 		'Get the extrusion distance string from the extrusion distance.'
-		self.distanceFeedRate.output.write('G1 F%s\n' % self.extruderRetractionSpeedMinuteString )
-		self.distanceFeedRate.output.write('G1%s\n' % self.getExtrusionDistanceStringFromExtrusionDistance( extrusionDistance ) )
-		self.distanceFeedRate.output.write('G1 F%s\n' % self.distanceFeedRate.getRounded( self.feedRateMinute ) )
+		if self.repository.extruderRetractionSpeed.value != 0.0:
+			self.distanceFeedRate.output.write('G1 F%s\n' % self.extruderRetractionSpeedMinuteString)
+			self.distanceFeedRate.output.write('G1%s\n' % self.getExtrusionDistanceStringFromExtrusionDistance(extrusionDistance))
+			self.distanceFeedRate.output.write('G1 F%s\n' % self.distanceFeedRate.getRounded(self.feedRateMinute))
 
 	def getCraftedGcode(self, gcodeText, repository):
 		'Parse gcode text and store the dimension gcode.'
@@ -325,7 +326,7 @@ class DimensionSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> dimension </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('dimension')
 				return
 			elif firstWord == '(<layerThickness>':
 				self.layerThickness = float(splitLine[1])
@@ -363,9 +364,10 @@ class DimensionSkein:
 			self.layerIndex += 1
 		elif firstWord == 'M101':
 			self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
-			if not self.repository.relativeExtrusionDistance.value:
-				self.distanceFeedRate.addLine('G92 E0')
-				self.totalExtrusionDistance = 0.0
+			if self.totalExtrusionDistance > 999999.0: 
+				if not self.repository.relativeExtrusionDistance.value:
+					self.distanceFeedRate.addLine('G92 E0')
+					self.totalExtrusionDistance = 0.0
 			self.isExtruderActive = True
 		elif firstWord == 'M103':
 			self.retractionRatio = self.getRetractionRatio(lineIndex)

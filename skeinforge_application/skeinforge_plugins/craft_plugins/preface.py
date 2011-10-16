@@ -168,8 +168,8 @@ class PrefaceSkein:
 		self.distanceFeedRate.addTagBracketedLine('timeStampPreface', strftime('%Y%m%d_%H%M%S'))
 		procedureNames = self.svgReader.sliceDictionary['procedureName'].replace(',', ' ').split()
 		for procedureName in procedureNames:
-			self.distanceFeedRate.addTagBracketedLine('procedureName', procedureName)
-		self.distanceFeedRate.addTagBracketedLine('procedureName', 'preface')
+			self.distanceFeedRate.addTagBracketedProcedure(procedureName)
+		self.distanceFeedRate.addTagBracketedProcedure('preface')
 		self.distanceFeedRate.addLine('(</extruderInitialization>)') # Initialization is finished, extrusion is starting.
 		self.distanceFeedRate.addLine('(<crafting>)') # Initialization is finished, crafting is starting.
 

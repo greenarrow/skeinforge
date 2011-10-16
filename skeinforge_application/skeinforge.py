@@ -230,28 +230,27 @@ import os
 import sys
 
 
+# document synopsis..
+# no need for completely filled bridge layer
+# analyze in export
+# add date time 11.01.02|12:08
+# double M108 problem by raft
+# unpause slow flow rate instead of speeding feed rate
+# fix arc model 'too large for getArcComplexes in svgReader'
+#
 # unimportant
 # minor outline problem when an end path goes through a path, like in the letter A
 # view profile 1 mm thickness
 #
-# document clip is also for skin
-# move M101.. in skin to elif
+# fix infill on small circles, like 25499 Screw_Holder_stretch.. G1 X39.6221 Y-38.9346 Z14.0001 F960.0
 # think about http://code.google.com/p/skeinarchiver/ and/or undo
 # work out why skinning sometimes straightens a side of a circle
-# fix open end after clip
-# replace getHorizontalSegmentListsFromLoo.. in fill
+# replace getHorizontalSegmentListsFromLoo.. in fill also change inset algorithm to skin
 # use shortened infill to determine sparseness
-# no need for completely filled bridge layer
 # skin layers without something over the infill
-# analyze in export
-# add date time 11.01.02|12:08
-# comment search from home panel until there is an input field
 # maybe in svgReader if loop intersection with previous union else add
 # smooth http://hydraraptor.blogspot.com/2010/12/frequency-limit.html _extrusion
 # raftPerimeter outset by maximum thickness
-# double M108 problem by raft
-# fix arc model 'too large for getArcComplexes in svgReader'
-# unpause slow flow rate instead of speeding feed rate
 # set temperature in temperature
 # add links download manual svg_writer, add left right arrow keys to layer
 # infuse _extrusion
@@ -279,6 +278,7 @@ import sys
 # voronoi average location intersection looped inset intercircles
 # 'fileName, text, repository' commandLineInterface
 # delete: text = text.replace(('\nName                          %sValue\n' % globalSpreadsheetSeparator), ('\n_Name                          %sValue\n' % globalSpreadsheetSeparator))
+# comment search from home panel when there is an input field
 #
 #
 # multiply to table + boundary bedBound bedWidth bedHeight bedFile.csv

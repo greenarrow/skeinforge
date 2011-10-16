@@ -342,7 +342,7 @@ class CoolSkein:
 				if self.repository.turnFanOnAtBeginning.value:
 					self.distanceFeedRate.addLine('M106')
 			elif firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> cool </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('cool')
 				return
 			elif firstWord == '(<orbitalFeedRatePerSecond>':
 				self.orbitalFeedRatePerSecond = float(splitLine[1])

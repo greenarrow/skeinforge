@@ -152,12 +152,15 @@ class MultiplySkein:
 		for line in self.layerLines:
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
 			firstWord = gcodec.getFirstWord(splitLine)
-			if firstWord == 'G1':
-				movedLocation = self.getMovedLocationSetOldLocation(offset, splitLine)
-				line = self.distanceFeedRate.getLinearGcodeMovement(movedLocation.dropAxis(), movedLocation.z)
-			elif firstWord == '(<boundaryPoint>':
+			if firstWord == '(<boundaryPoint>':
 				movedLocation = self.getMovedLocationSetOldLocation(offset, splitLine)
 				line = self.distanceFeedRate.getBoundaryLine(movedLocation)
+			elif firstWord == 'G1':
+				movedLocation = self.getMovedLocationSetOldLocation(offset, splitLine)
+				line = self.distanceFeedRate.getLinearGcodeMovement(movedLocation.dropAxis(), movedLocation.z)
+			elif firstWord == '(<infillPoint>':
+				movedLocation = self.getMovedLocationSetOldLocation(offset, splitLine)
+				line = self.distanceFeedRate.getInfillBoundaryLine(movedLocation)
 			self.distanceFeedRate.addLine(line)
 
 	def addLayer(self):
@@ -218,7 +221,7 @@ class MultiplySkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> multiply </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('multiply')
 				self.distanceFeedRate.addLine(line)
 				self.lineIndex += 1
 				return

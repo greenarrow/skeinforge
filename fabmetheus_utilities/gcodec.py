@@ -137,7 +137,7 @@ def getLineWithValueString(character, line, splitLine, valueString):
 	'Get the line with a valueString.'
 	roundedValueString = character + valueString
 	indexOfValue = getIndexOfStartingWithSecond(character, splitLine)
-	if indexOfValue == - 1:
+	if indexOfValue == -1:
 		return line + ' ' + roundedValueString
 	word = splitLine[indexOfValue]
 	return line.replace(word, roundedValueString)
@@ -170,6 +170,14 @@ def getStringFromCharacterSplitLine(character, splitLine):
 		return None
 	return splitLine[indexOfCharacter][1 :]
 
+def getTagBracketedLine(tagName, value):
+	'Get line with a begin tag, value and end tag.'
+	return '(<%s> %s </%s>)' % (tagName, value, tagName)
+
+def getTagBracketedProcedure(procedure):
+	'Get line with a begin procedure tag, procedure and end procedure tag.'
+	return getTagBracketedLine('procedureName', procedure)
+
 def getWithoutBracketsEqualTab(line):
 	'Get a string without the greater than sign, the bracket and less than sign, the equal sign or the tab.'
 	line = line.replace('=', ' ')
@@ -181,25 +189,10 @@ def isProcedureDone(gcodeText, procedure):
 	'Determine if the procedure has been done on the gcode text.'
 	if gcodeText == '':
 		return False
-	lines = archive.getTextLines(gcodeText)
-	for line in lines:
-		withoutBracketsEqualTabQuotes = getWithoutBracketsEqualTab(line).replace('"', '').replace("'", '')
-		splitLine = getWithoutBracketsEqualTab( withoutBracketsEqualTabQuotes ).split()
-		firstWord = getFirstWord(splitLine)
-		if firstWord == 'procedureName':
-			if splitLine[1].find(procedure) != -1:
-				return True
-		elif firstWord == 'extrusionStart':
-			return False
-		procedureIndex = line.find(procedure)
-		if procedureIndex != -1:
-			if 'procedureName' in splitLine:
-				nextIndex = splitLine.index('procedureName') + 1
-				if nextIndex < len(splitLine):
-					nextWordSplit = splitLine[nextIndex].split(',')
-					if procedure in nextWordSplit:
-						return True
-	return False
+	extruderInitializationIndex = gcodeText.find('(</extruderInitialization>)')
+	if extruderInitializationIndex == -1:
+		return False
+	return gcodeText.find(getTagBracketedProcedure(procedure), 0, extruderInitializationIndex) != -1
 
 def isProcedureDoneOrFileIsEmpty(gcodeText, procedure):
 	'Determine if the procedure has been done on the gcode text or the file is empty.'
@@ -347,11 +340,15 @@ class DistanceFeedRate:
 
 	def addTagBracketedLine(self, tagName, value):
 		'Add a begin tag, value and end tag.'
-		self.addLine('(<%s> %s </%s>)' % (tagName, value, tagName))
+		self.addLine(getTagBracketedLine(tagName, value))
 
 	def addTagRoundedLine(self, tagName, value):
 		'Add a begin tag, rounded value and end tag.'
 		self.addLine('(<%s> %s </%s>)' % (tagName, self.getRounded(value), tagName))
+
+	def addTagBracketedProcedure(self, procedure):
+		'Add a begin procedure tag, procedure and end procedure tag.'
+		self.addLine(getTagBracketedProcedure(procedure))
 
 	def getBoundaryLine(self, location):
 		'Get boundary gcode line.'

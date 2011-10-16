@@ -128,7 +128,7 @@ class BookendSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> bookend </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('bookend')
 				return
 			self.distanceFeedRate.addLine(line)
 		

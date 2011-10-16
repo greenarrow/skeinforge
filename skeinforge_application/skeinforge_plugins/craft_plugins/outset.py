@@ -127,7 +127,7 @@ class OutsetSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addTagBracketedLine('procedureName', 'outset')
+				self.distanceFeedRate.addTagBracketedProcedure('outset')
 				return
 			elif firstWord == '(<perimeterWidth>':
 				self.absoluteHalfPerimeterWidth = 0.5 * abs(float(splitLine[1]))

@@ -112,6 +112,7 @@ class SkinSkein:
 	'A class to skin a skein of extrusions.'
 	def __init__(self):
 		'Initialize.'
+		self.clipOverPerimeterWidth = 0.0
  		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.feedRateMinute = 959.0
 		self.infill = None
@@ -143,34 +144,33 @@ class SkinSkein:
 		upperZ = self.oldLocation.z
 		lowerZ = upperZ - self.halfLayerThickness
 		self.addFlowRateLine(0.25 * self.oldFlowRate)
-		for infillBoundary in self.infillBoundaries:
-			self.addSkinnedInfillBoundary(infillBoundary, 0.0, upperZ, lowerZ)
-			self.addSkinnedInfillBoundary(infillBoundary, offsetY, upperZ, upperZ)
+		self.addSkinnedInfillBoundary(self.infillBoundaries, 0.0, upperZ, lowerZ)
+		self.addSkinnedInfillBoundary(self.infillBoundaries, offsetY, upperZ, upperZ)
 		self.addFlowRateLine(self.oldFlowRate)
 		self.infillBoundaries = None
 
-	def addSkinnedInfillBoundary(self, infillBoundary, offsetY, upperZ, z):
+	def addSkinnedInfillBoundary(self, infillBoundaries, offsetY, upperZ, z):
 		'Add skinned infill boundary.'
 		alreadyFilledInsets = []
 		aroundInset = 0.25 * self.skinInfillInset
 		aroundWidth = 0.25 * self.skinInfillInset
 		endpoints = []
-		infillBoundaryRotated = euclidean.getPointsRoundZAxis(self.reverseRotation, infillBoundary)
-		if offsetY != 0.0:
-			for infillPointRotatedIndex, infillPointRotated in enumerate(infillBoundaryRotated):
-				infillBoundaryRotated[infillPointRotatedIndex] = complex(infillPointRotated.real, infillPointRotated.imag - offsetY)
 		pixelTable = {}
 		slightlyGreaterThanInfill = 1.01 * self.skinInfillInset
 		xIntersectionsTable = {}
-		centers = intercircle.getCentersFromLoop(infillBoundaryRotated, slightlyGreaterThanInfill)
-		for center in centers:
-			alreadyFilledInset = intercircle.getSimplifiedInsetFromClockwiseLoop(center, self.skinInfillInset)
-			if intercircle.isLargeSameDirection(alreadyFilledInset, center, self.skinInfillInset):
-				if euclidean.isPathInsideLoop(infillBoundaryRotated, alreadyFilledInset) == euclidean.isWiddershins(infillBoundaryRotated):
-					alreadyFilledInsets.append(alreadyFilledInset)
-				around = intercircle.getSimplifiedInsetFromClockwiseLoop(center, aroundInset)
-				if euclidean.isPathInsideLoop(infillBoundaryRotated, around) == euclidean.isWiddershins(infillBoundaryRotated):
-					euclidean.addLoopToPixelTable(around, pixelTable, aroundWidth)
+		for infillBoundary in infillBoundaries:
+			infillBoundaryRotated = euclidean.getPointsRoundZAxis(self.reverseRotation, infillBoundary)
+			if offsetY != 0.0:
+				for infillPointRotatedIndex, infillPointRotated in enumerate(infillBoundaryRotated):
+					infillBoundaryRotated[infillPointRotatedIndex] = complex(infillPointRotated.real, infillPointRotated.imag - offsetY)
+			centers = intercircle.getCentersFromLoop(infillBoundaryRotated, slightlyGreaterThanInfill)
+			for center in centers:
+				alreadyFilledInset = intercircle.getSimplifiedInsetFromClockwiseLoop(center, self.skinInfillInset)
+				if intercircle.isLargeSameDirection(alreadyFilledInset, center, self.skinInfillInset):
+					if euclidean.isPathInsideLoop(infillBoundaryRotated, alreadyFilledInset) == euclidean.isWiddershins(infillBoundaryRotated):
+						alreadyFilledInsets.append(alreadyFilledInset)
+						around = intercircle.getSimplifiedInsetFromClockwiseLoop(center, aroundInset)
+						euclidean.addLoopToPixelTable(around, pixelTable, aroundWidth)
 		for alreadyFilledInset in alreadyFilledInsets:
 			euclidean.addXIntersectionsFromLoopForTable(alreadyFilledInset, xIntersectionsTable, self.skinInfillWidth)
 		xIntersectionsTableKeys = xIntersectionsTable.keys()
@@ -182,7 +182,6 @@ class SkinSkein:
 				for endpoint in segment:
 					endpoint.point = complex(endpoint.point.real, endpoint.point.imag + offsetY)
 					endpoints.append(endpoint)
-		pixelTable = {}
 		infillPaths = euclidean.getPathsFromEndpoints(endpoints, 5.0 * self.skinInfillWidth, pixelTable, aroundWidth)
 		for infillPath in infillPaths:
 			infillRotated = euclidean.getPointsRoundZAxis(self.rotation, infillPath)
@@ -198,22 +197,29 @@ class SkinSkein:
 		'Add skinned perimeter.'
 		if self.perimeter == None:
 			return
-		self.perimeter = self.perimeter[: -1]
-		innerPerimeter = intercircle.getLargestInsetLoopFromLoop(self.perimeter, self.quarterPerimeterWidth)
-		innerPerimeter = self.getClippedSimplifiedLoopPathByLoop(innerPerimeter)
-		outerPerimeter = intercircle.getLargestInsetLoopFromLoop(self.perimeter, -self.quarterPerimeterWidth)
-		outerPerimeter = self.getClippedSimplifiedLoopPathByLoop(outerPerimeter)
+		perimeterThread = self.perimeter[: -1]
 		lowerZ = self.oldLocation.z - self.halfLayerThickness
-		self.addFlowRateLine(0.25 * self.oldFlowRate)
-		self.addPerimeterLoop(innerPerimeter, lowerZ)
-		self.addPerimeterLoop(outerPerimeter, lowerZ)
-		self.addPerimeterLoop(innerPerimeter, self.oldLocation.z)
-		self.addPerimeterLoop(outerPerimeter, self.oldLocation.z)
+		innerPerimeter = intercircle.getLargestInsetLoopFromLoop(perimeterThread, self.quarterPerimeterWidth)
+		outerPerimeter = intercircle.getLargestInsetLoopFromLoop(perimeterThread, -self.quarterPerimeterWidth)
+		innerPerimeter = self.getClippedSimplifiedLoopPathByLoop(innerPerimeter)
+		outerPerimeter = self.getClippedSimplifiedLoopPathByLoop(outerPerimeter)
+		if len(innerPerimeter) < 4 or len(outerPerimeter) < 4:
+			self.addFlowRateLine(0.5 * self.oldFlowRate)
+			self.addPerimeterLoop(self.perimeter, lowerZ)
+			self.addPerimeterLoop(self.perimeter, self.oldLocation.z)
+		else:
+			self.addFlowRateLine(0.25 * self.oldFlowRate)
+			self.addPerimeterLoop(innerPerimeter, lowerZ)
+			self.addPerimeterLoop(outerPerimeter, lowerZ)
+			self.addPerimeterLoop(innerPerimeter, self.oldLocation.z)
+			self.addPerimeterLoop(outerPerimeter, self.oldLocation.z)
 		self.addFlowRateLine(self.oldFlowRate)
 		self.perimeter = None
 
 	def getClippedSimplifiedLoopPathByLoop(self, loop):
 		'Get clipped and simplified loop path from a loop.'
+		if len(loop) == 0:
+			return []
 		loopPath = loop + [loop[0]]
 		return euclidean.getClippedSimplifiedLoopPath(self.clipLength, loopPath, self.halfPerimeterWidth)
 
@@ -267,7 +273,7 @@ class SkinSkein:
 			if firstWord == '(<clipOverPerimeterWidth>':
 				self.clipOverPerimeterWidth = float(splitLine[1])
 			elif firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> skin </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('skin')
 				return
 			elif firstWord == '(<infillPerimeterOverlap>':
 				self.infillPerimeterOverlap = float(splitLine[1])
@@ -306,6 +312,8 @@ class SkinSkein:
 		elif firstWord == '(<infill>)':
 			if self.layerIndex >= self.layersFromBottom and self.layerIndex == self.layerIndexTop:
 				self.infillBoundaries = []
+		elif firstWord == '(</infill>)':
+			self.addSkinnedInfill()
 		elif firstWord == '(<infillBoundary>)':
 			if self.infillBoundaries != None:
 				self.infillBoundary = []
@@ -317,6 +325,9 @@ class SkinSkein:
 		elif firstWord == '(<layer>':
 			self.layerCount.printProgressIncrement('skin')
 			self.layerIndex += 1
+		elif firstWord == 'M101' or firstWord == 'M103':
+			if self.infillBoundaries != None or self.perimeter != None:
+				return
 		elif firstWord == 'M108':
 			self.oldFlowRate = gcodec.getDoubleAfterFirstLetter(splitLine[1])
 		elif firstWord == '(<perimeter>':
@@ -327,11 +338,6 @@ class SkinSkein:
 			self.reverseRotation = complex(self.rotation.real, -self.rotation.imag)
 		elif firstWord == '(</perimeter>)':
 			self.addSkinnedPerimeter()
-		elif firstWord == '(</infill>)':
-			self.addSkinnedInfill()
-		if firstWord == 'M101' or firstWord == 'M103':
-			if self.infillBoundaries != None or self.perimeter != None:
-				return
 		self.distanceFeedRate.addLine(line)
 
 

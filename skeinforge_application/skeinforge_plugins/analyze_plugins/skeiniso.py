@@ -1,6 +1,6 @@
 """
 This page is in the table of contents.
-Skeiniso is an analysis script to display a gcode file in an isometric view.
+Skeiniso is an analyze viewer to display a gcode file in an isometric view.
 
 The skeiniso manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skeiniso

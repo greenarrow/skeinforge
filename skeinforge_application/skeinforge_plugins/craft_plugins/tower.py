@@ -311,7 +311,7 @@ class TowerSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> tower </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('tower')
 			elif firstWord == '(<layer>':
 				return
 			elif firstWord == '(<layerThickness>':

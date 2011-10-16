@@ -433,7 +433,7 @@ class OozebaneSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> oozebane </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('oozebane')
 				return
 			elif firstWord == '(<operatingFeedRatePerSecond>':
 				self.operatingFeedRateMinute = 60.0 * float(splitLine[1])

@@ -405,7 +405,7 @@ class ExportSkein:
 		if firstWord == '(<crafting>)':
 			self.crafting = True
 		if firstWord == '(</extruderInitialization>)':
-			self.addLine('(<procedureName> export </procedureName>)')
+			self.addLine(gcodec.getTagBracketedProcedure('export'))
 		if firstWord != 'G1' and firstWord != 'G2' and firstWord != 'G3' :
 			self.addLine(line)
 			return

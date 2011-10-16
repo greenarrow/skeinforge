@@ -85,7 +85,6 @@ class LimitRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Limit', self, '')
 		self.activateLimit = settings.BooleanSetting().getFromValue('Activate Limit', self, True)
 		self.maximumInitialFeedRate = settings.FloatSpin().getFromValue(0.5, 'Maximum Initial Feed Rate (mm/s):', self, 10.0, 1.0)
-		self.maximumZFeedRatePerSecond = settings.FloatSpin().getFromValue(0.5, 'Maximum Z Feed Rate (mm/s):', self, 10.0, 1.0)
 		self.executeTitle = 'Limit'
 
 	def execute(self):
@@ -101,16 +100,16 @@ class LimitSkein:
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.feedRateMinute = None
 		self.lineIndex = 0
+		self.maximumZDrillFeedRatePerSecond = 987654321.0
 		self.oldLocation = None
 
 	def getCraftedGcode(self, gcodeText, repository):
 		'Parse gcode text and store the limit gcode.'
-		self.maximumZDrillFeedRatePerSecond = repository.maximumZFeedRatePerSecond.value
-		self.maximumZTravelFeedRatePerSecond = repository.maximumZFeedRatePerSecond.value
-		self.maximumZFeedRatePerSecond = self.maximumZTravelFeedRatePerSecond
 		self.repository = repository
 		self.lines = archive.getTextLines(gcodeText)
 		self.parseInitialization()
+		self.maximumZDrillFeedRatePerSecond = min(self.maximumZDrillFeedRatePerSecond, self.maximumZTravelFeedRatePerSecond)
+		self.maximumZFeedRatePerSecond = self.maximumZTravelFeedRatePerSecond
 		for lineIndex in xrange(self.lineIndex, len(self.lines)):
 			self.parseLine( lineIndex )
 		return self.distanceFeedRate.output.getvalue()
@@ -159,12 +158,12 @@ class LimitSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> limit </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('limit')
 				return
 			elif firstWord == '(<maximumZDrillFeedRatePerSecond>':
 				self.maximumZDrillFeedRatePerSecond = float(splitLine[1])
-			elif firstWord == '(<perimeterWidth>':
-				self.distanceFeedRate.addTagBracketedLine('maximumZTravelFeedRatePerSecond', self.maximumZTravelFeedRatePerSecond )
+			elif firstWord == '(<maximumZTravelFeedRatePerSecond>':
+				self.maximumZTravelFeedRatePerSecond = float(splitLine[1])
 			self.distanceFeedRate.addLine(line)
 
 	def parseLine( self, lineIndex ):

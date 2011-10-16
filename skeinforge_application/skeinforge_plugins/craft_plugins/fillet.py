@@ -203,7 +203,7 @@ class BevelSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.distanceFeedRate.addLine('(<procedureName> fillet </procedureName>)')
+				self.distanceFeedRate.addTagBracketedProcedure('fillet')
 				return
 			elif firstWord == '(<perimeterWidth>':
 				perimeterWidth = abs(float(splitLine[1]))

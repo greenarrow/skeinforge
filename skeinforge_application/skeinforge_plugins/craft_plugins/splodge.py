@@ -277,7 +277,7 @@ class SplodgeSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == '(</extruderInitialization>)':
-				self.addLineUnlessIdenticalReactivate('(<procedureName> splodge </procedureName>)')
+				self.addLineUnlessIdenticalReactivate(gcodec.getTagBracketedProcedure('splodge'))
 				return
 			elif firstWord == '(<layerThickness>':
 				self.layerThickness = float(splitLine[1])
