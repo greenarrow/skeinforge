@@ -117,7 +117,7 @@ class HopSkein:
 		self.lines = archive.getTextLines(gcodeText)
 		self.minimumSlope = math.tan( math.radians( hopRepository.minimumHopAngle.value ) )
 		self.parseInitialization( hopRepository )
-		for self.lineIndex in xrange( self.lineIndex, len(self.lines) ):
+		for self.lineIndex in xrange(self.lineIndex, len(self.lines)):
 			line = self.lines[self.lineIndex]
 			self.parseLine(line)
 		return self.distanceFeedRate.output.getvalue()
@@ -211,7 +211,7 @@ def main():
 	if len(sys.argv) > 1:
 		writeOutput(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

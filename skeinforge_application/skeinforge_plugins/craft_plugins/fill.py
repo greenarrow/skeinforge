@@ -227,8 +227,8 @@ def addAroundGridPoint( arounds, gridPoint, gridPointInsetX, gridPointInsetY, gr
 	for pathIndex in pathIndexTable.keys():
 		path = paths[ pathIndex ]
 		for pointIndex in xrange( len(path) - 1 ):
-			pointFirst = path[ pointIndex ]
-			pointSecond = path[ pointIndex + 1 ]
+			pointFirst = path[pointIndex]
+			pointSecond = path[pointIndex + 1]
 			yIntersection = getYIntersectionInsideYSegment( segmentFirstY, segmentSecondY, pointFirst, pointSecond, gridPoint.real )
 			addYIntersectionPathToList( pathIndex, pointIndex, gridPoint.imag, yIntersection, yIntersectionPaths )
 	if len( yIntersectionPaths ) < 1:
@@ -250,6 +250,14 @@ def addAroundGridPoint( arounds, gridPoint, gridPointInsetX, gridPointInsetY, gr
 	yCloseToCenterPaths[1].gridPoint = complex( gridPoint.real, gridPoint.imag + plusMinusSign * gridPointInsetY )
 	yCloseToCenterPaths.sort( comparePointIndexDescending )
 	insertGridPointPairs( gridPoint, gridPointInsetX, gridPoints, yCloseToCenterPaths[0], yCloseToCenterPaths[1], isBothOrNone, isJunctionWide, paths, pixelTable, width )
+
+def addInfillBoundary(infillBoundary, nestedRings):
+	'Add infill boundary to the nested ring that contains it.'
+	infillPoint = infillBoundary[0]
+	for nestedRing in nestedRings:
+		if euclidean.isPointInsideLoop(nestedRing.boundary, infillPoint):
+			nestedRing.infillBoundaries.append(infillBoundary)
+			return
 
 def addLoop(infillWidth, infillPaths, loop, rotationPlaneAngle):
 	'Add simplified path to fill.'
@@ -286,14 +294,14 @@ def addPointOnPath( path, pathIndex, pixelTable, point, pointIndex, width ):
 	if pointIndex < len(path) and pointIndexMinusOne >= 0:
 		segmentTable = {}
 		begin = path[ pointIndexMinusOne ]
-		end = path[ pointIndex ]
+		end = path[pointIndex]
 		euclidean.addValueSegmentToPixelTable( begin, end, segmentTable, pathIndex, width )
 		euclidean.removePixelTableFromPixelTable( segmentTable, pixelTable )
 	if pointIndexMinusOne >= 0:
 		begin = path[ pointIndexMinusOne ]
 		euclidean.addValueSegmentToPixelTable( begin, point, pixelTable, pathIndex, width )
 	if pointIndex < len(path):
-		end = path[ pointIndex ]
+		end = path[pointIndex]
 		euclidean.addValueSegmentToPixelTable( point, end, pixelTable, pathIndex, width )
 	path.insert( pointIndex, point )
 
@@ -378,7 +386,7 @@ def createExtraFillLoops(nestedRing, radius, shouldExtraLoopsBeAdded):
 	nestedRing.lastFillLoops = allFillLoops
 
 def createFillForSurroundings(nestedRings, radius, shouldExtraLoopsBeAdded):
-	'Create extra fill loops for surrounding loops.'
+	'Create extra fill loops for nested rings.'
 	for nestedRing in nestedRings:
 		createExtraFillLoops(nestedRing, radius, shouldExtraLoopsBeAdded)
 
@@ -388,7 +396,19 @@ def getAdditionalLength( path, point, pointIndex ):
 		return abs( point - path[0] )
 	if pointIndex == len(path):
 		return abs( point - path[-1] )
-	return abs( point - path[ pointIndex - 1 ] ) + abs( point - path[ pointIndex ] ) - abs( path[ pointIndex ] - path[ pointIndex - 1 ] )
+	return abs( point - path[pointIndex - 1] ) + abs( point - path[pointIndex] ) - abs( path[pointIndex] - path[pointIndex - 1] )
+
+def getClosestOppositeIntersectionPaths( yIntersectionPaths ):
+	'Get the close to center paths, starting with the first and an additional opposite if it exists.'
+	yIntersectionPaths.sort( compareDistanceFromCenter )
+	beforeFirst = yIntersectionPaths[0].yMinusCenter < 0.0
+	yCloseToCenterPaths = [ yIntersectionPaths[0] ]
+	for yIntersectionPath in yIntersectionPaths[1 :]:
+		beforeSecond = yIntersectionPath.yMinusCenter < 0.0
+		if beforeFirst != beforeSecond:
+			yCloseToCenterPaths.append( yIntersectionPath )
+			return yCloseToCenterPaths
+	return yCloseToCenterPaths
 
 def getCraftedText( fileName, gcodeText = '', repository=None):
 	'Fill the inset file or gcode text.'
@@ -403,18 +423,6 @@ def getCraftedTextFromText(gcodeText, repository=None):
 	if not repository.activateFill.value:
 		return gcodeText
 	return FillSkein().getCraftedGcode( repository, gcodeText )
-
-def getClosestOppositeIntersectionPaths( yIntersectionPaths ):
-	'Get the close to center paths, starting with the first and an additional opposite if it exists.'
-	yIntersectionPaths.sort( compareDistanceFromCenter )
-	beforeFirst = yIntersectionPaths[0].yMinusCenter < 0.0
-	yCloseToCenterPaths = [ yIntersectionPaths[0] ]
-	for yIntersectionPath in yIntersectionPaths[1 :]:
-		beforeSecond = yIntersectionPath.yMinusCenter < 0.0
-		if beforeFirst != beforeSecond:
-			yCloseToCenterPaths.append( yIntersectionPath )
-			return yCloseToCenterPaths
-	return yCloseToCenterPaths
 
 def getExtraFillLoops(loops, radius):
 	'Get extra loops between inside and outside loops.'
@@ -450,6 +458,10 @@ def getLowerLeftCorner(nestedRings):
 				lowerLeftCorner.setToXYZ(point.real, point.imag, nestedRing.z)
 	return lowerLeftCorner
 
+def getNewRepository():
+	'Get new repository.'
+	return FillRepository()
+
 def getNonIntersectingGridPointLine( gridPointInsetX, isJunctionWide, paths, pixelTable, yIntersectionPath, width ):
 	'Get the points around the grid point that is junction wide that do not intersect.'
 	pointIndexPlusOne = yIntersectionPath.getPointIndexPlusOne()
@@ -475,10 +487,6 @@ def getPlusMinusSign(number):
 	if number >= 0.0:
 		return 1.0
 	return - 1.0
-
-def getNewRepository():
-	'Get new repository.'
-	return FillRepository()
 
 def getWithLeastLength( path, point ):
 	'Insert a point into a path, at the index at which the path would be shortest.'
@@ -569,14 +577,14 @@ def insertGridPointPairWithLinePath( gridPoint, gridPointInsetX, gridPoints, isJ
 def isAddedPointOnPathFree( path, pixelTable, point, pointIndex, width ):
 	'Determine if the point added to a path is intersecting the pixel table or the path.'
 	if pointIndex > 0 and pointIndex < len(path):
-		if isSharpCorner( ( path[ pointIndex - 1 ] ), point, ( path[ pointIndex ] ) ):
+		if isSharpCorner( ( path[pointIndex - 1] ), point, ( path[pointIndex] ) ):
 			return False
 	pointIndexMinusOne = pointIndex - 1
 	if pointIndexMinusOne >= 0:
 		maskTable = {}
 		begin = path[ pointIndexMinusOne ]
 		if pointIndex < len(path):
-			end = path[ pointIndex ]
+			end = path[pointIndex]
 			euclidean.addValueSegmentToPixelTable( begin, end, maskTable, None, width )
 		segmentTable = {}
 		euclidean.addSegmentToPixelTable( point, begin, segmentTable, 0.0, 2.0, width )
@@ -586,7 +594,7 @@ def isAddedPointOnPathFree( path, pixelTable, point, pointIndex, width ):
 			return False
 	if pointIndex < len(path):
 		maskTable = {}
-		begin = path[ pointIndex ]
+		begin = path[pointIndex]
 		if pointIndexMinusOne >= 0:
 			end = path[ pointIndexMinusOne ]
 			euclidean.addValueSegmentToPixelTable( begin, end, maskTable, None, width )
@@ -601,7 +609,7 @@ def isAddedPointOnPathFree( path, pixelTable, point, pointIndex, width ):
 def isAddedPointOnPathIntersectingPath( begin, path, point, pointIndex ):
 	'Determine if the point added to a path is intersecting the path by checking line intersection.'
 	segment = point - begin
-	segmentLength = abs( segment )
+	segmentLength = abs(segment)
 	if segmentLength <= 0.0:
 		return False
 	normalizedSegment = segment / segmentLength
@@ -626,13 +634,6 @@ def isIntersectingLoopsPaths( loops, paths, pointBegin, pointEnd ):
 		return True
 	return euclidean.isXSegmentIntersectingPaths( paths, pointBeginRotated.real, pointEndRotated.real, segmentYMirror, pointBeginRotated.imag )
 
-#def isPerimeterPathInSurroundLoops( nestedRings ):
-#	'Determine if there is a perimeter path in the surrounding loops.'
-#	for nestedRing in nestedRings:
-#		if len( nestedRing.perimeterPaths ) > 0:
-#			return True
-#	return False
-
 def isPointAddedAroundClosest( pixelTable, layerExtrusionWidth, paths, removedEndpointPoint, width ):
 	'Add the closest removed endpoint to the path, with minimal twisting.'
 	closestDistanceSquared = 999999999987654321.0
@@ -640,7 +641,7 @@ def isPointAddedAroundClosest( pixelTable, layerExtrusionWidth, paths, removedEn
 	for pathIndex in xrange( len(paths) ):
 		path = paths[ pathIndex ]
 		for pointIndex in xrange( len(path) ):
-			point = path[ pointIndex ]
+			point = path[pointIndex]
 			distanceSquared = abs( point - removedEndpointPoint )
 			if distanceSquared < closestDistanceSquared:
 				closestDistanceSquared = distanceSquared
@@ -778,7 +779,7 @@ class FillRepository:
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.fill.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Fill', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Fill')
-		self.activateFill = settings.BooleanSetting().getFromValue('Activate Fill:', self, True )
+		self.activateFill = settings.BooleanSetting().getFromValue('Activate Fill', self, True )
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Diaphragm -', self )
 		self.diaphragmPeriod = settings.IntSpin().getFromValue( 20, 'Diaphragm Period (layers):', self, 200, 100 )
@@ -881,6 +882,7 @@ class FillSkein:
 			self.layerExtrusionWidth *= self.bridgeWidthMultiplier
 			layerFillInset *= self.bridgeWidthMultiplier
 			self.distanceFeedRate.addLine('(<bridgeRotation> %s )' % rotatedLayer.rotation)
+		self.distanceFeedRate.addLine('(<rotation> %s )' % layerRotation)
 		aroundInset = 0.25 * self.layerExtrusionWidth
 		aroundWidth = 0.25 * self.layerExtrusionWidth
 		self.lastExtraShells = extraShells
@@ -911,8 +913,8 @@ class FillSkein:
 		fillLoops = euclidean.getFillOfSurroundings(nestedRings, None)
 		slightlyGreaterThanFill = 1.01 * layerFillInset
 		for loop in fillLoops:
-			alreadyFilledLoop = []
-			alreadyFilledArounds.append(alreadyFilledLoop)
+			alreadyFilledInsets = []
+			alreadyFilledArounds.append(alreadyFilledInsets)
 			planeRotatedPerimeter = euclidean.getPointsRoundZAxis(reverseRotation, loop)
 			rotatedLoops.append(planeRotatedPerimeter)
 			centers = intercircle.getCentersFromLoop(planeRotatedPerimeter, slightlyGreaterThanFill)
@@ -920,7 +922,7 @@ class FillSkein:
 			for center in centers:
 				alreadyFilledInset = intercircle.getSimplifiedInsetFromClockwiseLoop(center, layerFillInset)
 				if intercircle.isLargeSameDirection(alreadyFilledInset, center, layerFillInset):
-					alreadyFilledLoop.append(alreadyFilledInset)
+					alreadyFilledInsets.append(alreadyFilledInset)
 					around = intercircle.getSimplifiedInsetFromClockwiseLoop(center, aroundInset)
 					if euclidean.isPathInsideLoop(planeRotatedPerimeter, around) == euclidean.isWiddershins(planeRotatedPerimeter):
 						around.reverse()
@@ -970,7 +972,9 @@ class FillSkein:
 			paths = euclidean.getConnectedPaths(paths, pixelTable, aroundWidth)
 		for path in paths:
 			addPath(self.layerExtrusionWidth, infillPaths, path, layerRotation)
-		euclidean.transferPathsToSurroundingLoops(nestedRings, infillPaths)
+		euclidean.transferPathsToNestedRings(nestedRings, infillPaths)
+		for fillLoop in fillLoops:
+			addInfillBoundary(fillLoop, nestedRings)
 		self.addThreadsBridgeLayer(layerIndex, nestedRings, rotatedLayer)
 
 	def addGcodeFromThreadZ( self, thread, z ):
@@ -986,7 +990,7 @@ class FillSkein:
 		for path in paths:
 			pathIndexBegin = len( explodedPaths )
 			for pointIndex in xrange( len(path) - 1 ):
-				pathSegment = [ path[ pointIndex ], path[ pointIndex + 1 ] ]
+				pathSegment = [ path[pointIndex], path[pointIndex + 1] ]
 				explodedPaths.append( pathSegment )
 			pathGroups.append( ( pathIndexBegin, len( explodedPaths ) ) )
 		for pathIndex in xrange( len( explodedPaths ) ):
@@ -1110,6 +1114,7 @@ class FillSkein:
 		if layerIndex < 1:
 			threadSequence = ['perimeter', 'loops', 'infill']
 		euclidean.addToThreadsRemove(extrusionHalfWidth, nestedRings, self.oldOrderedLocation, self, threadSequence)
+		self.distanceFeedRate.addLine('(</rotation>)')
 		if rotatedLayer.rotation != None:
 			self.distanceFeedRate.addLine('(</bridgeRotation>)')
 		self.distanceFeedRate.addLine('(</layer>)')
@@ -1162,7 +1167,7 @@ class FillSkein:
 		self.infillOddLayerExtraRotation = math.radians( repository.infillOddLayerExtraRotation.value )
 		self.solidSurfaceThickness = int( round( self.repository.solidSurfaceThickness.value ) )
 		self.doubleSolidSurfaceThickness = self.solidSurfaceThickness + self.solidSurfaceThickness
-		for lineIndex in xrange( self.lineIndex, len(self.lines) ):
+		for lineIndex in xrange(self.lineIndex, len(self.lines)):
 			self.parseLine( lineIndex )
 		for layerIndex in xrange(len(self.rotatedLayers)):
 			self.addFill(layerIndex)
@@ -1260,21 +1265,22 @@ class FillSkein:
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
-			if firstWord == '(<perimeterWidth>':
+			if firstWord == '(<bridgeWidthMultiplier>':
+				self.bridgeWidthMultiplier = float(splitLine[1])
+			elif firstWord == '(<crafting>)':
+				self.distanceFeedRate.addLine(line)
+				return
+			elif firstWord == '(<layerThickness>':
+				self.layerThickness = float(splitLine[1])
+				self.infillWidth = self.repository.infillWidthOverThickness.value * self.layerThickness
+				self.distanceFeedRate.addTagRoundedLine('infillPerimeterOverlap', self.repository.infillPerimeterOverlap.value)
+				self.distanceFeedRate.addTagRoundedLine('infillWidth', self.infillWidth)
+			elif firstWord == '(<perimeterWidth>':
 				self.perimeterWidth = float(splitLine[1])
 				threadSequenceString = ' '.join( self.threadSequence )
 				self.distanceFeedRate.addTagBracketedLine('threadSequenceString', threadSequenceString )
 			elif firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addLine('(<procedureName> fill </procedureName>)')
-			elif firstWord == '(<crafting>)':
-				self.distanceFeedRate.addLine(line)
-				return
-			elif firstWord == '(<bridgeWidthMultiplier>':
-				self.bridgeWidthMultiplier = float(splitLine[1])
-			elif firstWord == '(<layerThickness>':
-				self.layerThickness = float(splitLine[1])
-				self.infillWidth = self.repository.infillWidthOverThickness.value * self.layerThickness
-				self.distanceFeedRate.addTagRoundedLine('infillWidth', self.infillWidth)
 			self.distanceFeedRate.addLine(line)
  
 	def parseLine( self, lineIndex ):
@@ -1301,8 +1307,7 @@ class FillSkein:
 			location = gcodec.getLocationFromSplitLine(None, splitLine)
 			self.nestedRing.addToBoundary( location )
 		elif firstWord == '(<bridgeRotation>':
-			secondWordWithoutBrackets = splitLine[1].replace('(', '').replace(')', '')
-			self.rotatedLayer.rotation = complex( secondWordWithoutBrackets )
+			self.rotatedLayer.rotation = gcodec.getRotationBySplitLine(splitLine)
 		elif firstWord == '(</crafting>)':
 			self.shutdownLineIndex = lineIndex
 		elif firstWord == '(<layer>':
@@ -1382,7 +1387,7 @@ def main():
 	if len(sys.argv) > 1:
 		writeOutput(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == '__main__':
 	main()

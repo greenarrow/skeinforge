@@ -281,8 +281,13 @@ def getWindowGivenTextRepository( fileName, gcodeText, repository ):
 	skein.parseGcode( fileName, gcodeText, repository )
 	return SkeinWindow( repository, skein )
 
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
+def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWritten, gcodeText=''):
 	"Write a skeinisoed gcode file for a skeinforge gcode file, if 'Activate Skeiniso' is selected."
+	try:
+		import Tkinter
+	except:
+		print('Warning, skeiniso will do nothing because Tkinter is not installed.')
+		return
 	repository = settings.getReadRepository( SkeinisoRepository() )
 	if repository.activateSkeiniso.value:
 		gcodeText = archive.getTextIfEmpty( fileNameSuffix, gcodeText )
@@ -358,7 +363,7 @@ class SkeinisoSkein:
 	def __init__(self):
 		self.coloredThread = []
 		self.feedRateMinute = 960.1
-		self.hasASurroundingLoopBeenReached = False
+		self.hasANestedRingBeenReached = False
 		self.isLoop = False
 		self.isPerimeter = False
 		self.isOuter = False
@@ -443,7 +448,7 @@ class SkeinisoSkein:
 		if self.isLoop:
 			self.setColoredThread( ( 255.0, 255.0, 0.0 ), self.skeinPane.loopLines ) #yellow
 			return
-		if not self.hasASurroundingLoopBeenReached:
+		if not self.hasANestedRingBeenReached:
 			self.setColoredThread( ( 165.0, 42.0, 42.0 ), self.skeinPane.raftLines ) #brown
 			return
 		if layerZoneIndex < self.repository.numberOfFillBottomLayers.value:
@@ -524,7 +529,7 @@ class SkeinisoSkein:
 		self.marginCornerLow = self.scaleCornerLow - margin
 		self.screenSize = margin + 2.0 * ( self.scaleCornerHigh - self.marginCornerLow )
 		self.initializeActiveLocation()
-		for self.lineIndex in xrange( self.lineIndex, len(self.lines) ):
+		for self.lineIndex in xrange(self.lineIndex, len(self.lines)):
 			line = self.lines[self.lineIndex]
 			self.parseLine(line)
 
@@ -567,7 +572,7 @@ class SkeinisoSkein:
 			self.moveColoredThreadToSkeinPane()
 			self.isLoop = False
 		elif firstWord == '(<nestedRing>)':
-			self.hasASurroundingLoopBeenReached = True
+			self.hasANestedRingBeenReached = True
 		elif firstWord == '(<perimeter>':
 			self.isPerimeter = True
 			self.isOuter = ( splitLine[1] == 'outer')
@@ -741,16 +746,16 @@ class SkeinWindow( tableau.TableauWindow ):
 		if self.repository.widthOfAxisPositiveSide.value > 0:
 			self.getDrawnColoredLine('last', self.positiveAxisLineZ, projectiveSpace, self.positiveAxisLineZ.tagString, self.repository.widthOfAxisPositiveSide.value )
 
+	def getCanvasRadius(self):
+		"Get half of the minimum of the canvas height and width."
+		return 0.5 * min( float( self.canvasHeight ), float( self.canvasWidth ) )
+
 	def getCentered( self, coordinate ):
 		"Get the centered coordinate."
 		relativeToCenter = complex( coordinate.real - self.center.real, self.center.imag - coordinate.imag )
 		if abs( relativeToCenter ) < 1.0:
 			relativeToCenter = complex( 0.0, 1.0 )
 		return relativeToCenter
-
-	def getCanvasRadius(self):
-		"Get half of the minimum of the canvas height and width."
-		return 0.5 * min( float( self.canvasHeight ), float( self.canvasWidth ) )
 
 	def getCenteredScreened( self, coordinate ):
 		"Get the normalized centered coordinate."
@@ -875,7 +880,7 @@ def main():
 	if len(sys.argv) > 1:
 		settings.startMainLoopFromWindow( getWindowAnalyzeFile(' '.join(sys.argv[1 :])) )
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

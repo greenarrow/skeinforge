@@ -205,10 +205,10 @@ class CombSkein:
 		self.combRepository = combRepository
 		self.lines = archive.getTextLines(gcodeText)
 		self.parseInitialization( combRepository )
-		for lineIndex in xrange( self.lineIndex, len(self.lines) ):
+		for lineIndex in xrange(self.lineIndex, len(self.lines)):
 			line = self.lines[lineIndex]
 			self.parseBoundariesLayers( combRepository, line )
-		for lineIndex in xrange( self.lineIndex, len(self.lines) ):
+		for lineIndex in xrange(self.lineIndex, len(self.lines)):
 			line = self.lines[lineIndex]
 			self.parseLine(line)
 		return self.distanceFeedRate.output.getvalue()
@@ -414,7 +414,7 @@ def main():
 	if len(sys.argv) > 1:
 		writeOutput(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

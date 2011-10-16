@@ -116,7 +116,7 @@ class LashSkein:
 		self.xBacklash = lashRepository.xBacklash.value
 		self.yBacklash = lashRepository.yBacklash.value
 		self.parseInitialization()
-		for self.lineIndex in xrange( self.lineIndex, len(self.lines) ):
+		for self.lineIndex in xrange(self.lineIndex, len(self.lines)):
 			line = self.lines[self.lineIndex]
 			self.parseLash(line)
 		return self.distanceFeedRate.output.getvalue()
@@ -165,7 +165,7 @@ def main():
 	if len(sys.argv) > 1:
 		writeOutput(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

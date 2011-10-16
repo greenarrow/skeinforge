@@ -1,5 +1,5 @@
 
-<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html><head><title>Python: module skeinforge_application.skeinforge_plugins.craft_plugins.fill</title>
 </head><body bgcolor="#f0f0f8">
 
@@ -265,7 +265,7 @@ The fill tool has created the file:<br>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#aa55cc">
 <td colspan=3 valign=bottom>&nbsp;<br>
-<font color="#fffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="__init__.html">__init__</a><br>
@@ -400,6 +400,7 @@ The fill tool has created the file:<br>
     
 <tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><dl><dt><a name="-addAroundGridPoint"><strong>addAroundGridPoint</strong></a>(arounds, gridPoint, gridPointInsetX, gridPointInsetY, gridPoints, gridSearchRadius, isBothOrNone, isDoubleJunction, isJunctionWide, paths, pixelTable, width)</dt><dd><tt>Add&nbsp;the&nbsp;path&nbsp;around&nbsp;the&nbsp;grid&nbsp;point.</tt></dd></dl>
+ <dl><dt><a name="-addInfillBoundary"><strong>addInfillBoundary</strong></a>(infillBoundary, nestedRings)</dt><dd><tt>Add&nbsp;infill&nbsp;boundary&nbsp;to&nbsp;the&nbsp;nested&nbsp;ring&nbsp;that&nbsp;contains&nbsp;it.</tt></dd></dl>
  <dl><dt><a name="-addLoop"><strong>addLoop</strong></a>(infillWidth, infillPaths, loop, rotationPlaneAngle)</dt><dd><tt>Add&nbsp;simplified&nbsp;path&nbsp;to&nbsp;fill.</tt></dd></dl>
  <dl><dt><a name="-addPath"><strong>addPath</strong></a>(infillWidth, infillPaths, path, rotationPlaneAngle)</dt><dd><tt>Add&nbsp;simplified&nbsp;path&nbsp;to&nbsp;fill.</tt></dd></dl>
  <dl><dt><a name="-addPathIndexFirstSegment"><strong>addPathIndexFirstSegment</strong></a>(gridPixel, pathIndexTable, pixelTable, segmentFirstPixel)</dt><dd><tt>Add&nbsp;the&nbsp;path&nbsp;index&nbsp;of&nbsp;the&nbsp;closest&nbsp;segment&nbsp;found&nbsp;toward&nbsp;the&nbsp;second&nbsp;segment.</tt></dd></dl>
@@ -412,7 +413,7 @@ The fill tool has created the file:<br>
  <dl><dt><a name="-compareDistanceFromCenter"><strong>compareDistanceFromCenter</strong></a>(self, other)</dt><dd><tt>Get&nbsp;comparison&nbsp;in&nbsp;order&nbsp;to&nbsp;sort&nbsp;y&nbsp;intersections&nbsp;in&nbsp;ascending&nbsp;order&nbsp;of&nbsp;distance&nbsp;from&nbsp;the&nbsp;center.</tt></dd></dl>
  <dl><dt><a name="-comparePointIndexDescending"><strong>comparePointIndexDescending</strong></a>(self, other)</dt><dd><tt>Get&nbsp;comparison&nbsp;in&nbsp;order&nbsp;to&nbsp;sort&nbsp;y&nbsp;intersections&nbsp;in&nbsp;descending&nbsp;order&nbsp;of&nbsp;point&nbsp;index.</tt></dd></dl>
  <dl><dt><a name="-createExtraFillLoops"><strong>createExtraFillLoops</strong></a>(nestedRing, radius, shouldExtraLoopsBeAdded)</dt><dd><tt>Create&nbsp;extra&nbsp;fill&nbsp;loops.</tt></dd></dl>
- <dl><dt><a name="-createFillForSurroundings"><strong>createFillForSurroundings</strong></a>(nestedRings, radius, shouldExtraLoopsBeAdded)</dt><dd><tt>Create&nbsp;extra&nbsp;fill&nbsp;loops&nbsp;for&nbsp;surrounding&nbsp;loops.</tt></dd></dl>
+ <dl><dt><a name="-createFillForSurroundings"><strong>createFillForSurroundings</strong></a>(nestedRings, radius, shouldExtraLoopsBeAdded)</dt><dd><tt>Create&nbsp;extra&nbsp;fill&nbsp;loops&nbsp;for&nbsp;nested&nbsp;rings.</tt></dd></dl>
  <dl><dt><a name="-getAdditionalLength"><strong>getAdditionalLength</strong></a>(path, point, pointIndex)</dt><dd><tt>Get&nbsp;the&nbsp;additional&nbsp;length&nbsp;added&nbsp;by&nbsp;inserting&nbsp;a&nbsp;point&nbsp;into&nbsp;a&nbsp;path.</tt></dd></dl>
  <dl><dt><a name="-getClosestOppositeIntersectionPaths"><strong>getClosestOppositeIntersectionPaths</strong></a>(yIntersectionPaths)</dt><dd><tt>Get&nbsp;the&nbsp;close&nbsp;to&nbsp;center&nbsp;paths,&nbsp;starting&nbsp;with&nbsp;the&nbsp;first&nbsp;and&nbsp;an&nbsp;additional&nbsp;opposite&nbsp;if&nbsp;it&nbsp;exists.</tt></dd></dl>
  <dl><dt><a name="-getCraftedText"><strong>getCraftedText</strong></a>(fileName, gcodeText<font color="#909090">=''</font>, repository<font color="#909090">=None</font>)</dt><dd><tt>Fill&nbsp;the&nbsp;inset&nbsp;file&nbsp;or&nbsp;gcode&nbsp;text.</tt></dd></dl>

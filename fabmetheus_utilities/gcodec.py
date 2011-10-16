@@ -109,6 +109,13 @@ def getFirstWordFromLine(line):
 	'Get the first word of a line.'
 	return getFirstWord(line.split())
 
+def getFirstWordIndexReverse(firstWord, lines, startIndex):
+	'Parse gcode in reverse order until the first word if there is one, otherwise return -1.'
+	for lineIndex in xrange(len(lines) - 1, startIndex - 1, -1):
+		if firstWord == getFirstWord(getSplitLineBeforeBracketSemicolon(lines[lineIndex])):
+			return lineIndex
+	return -1
+
 def getGcodeFileText(fileName, gcodeText):
 	'Get the gcode text from a file if it the gcode text is empty and if the file is a gcode file.'
 	if gcodeText != '':
@@ -143,6 +150,10 @@ def getLocationFromSplitLine(oldLocation, splitLine):
 		getDoubleFromCharacterSplitLineValue('X', splitLine, oldLocation.x),
 		getDoubleFromCharacterSplitLineValue('Y', splitLine, oldLocation.y),
 		getDoubleFromCharacterSplitLineValue('Z', splitLine, oldLocation.z))
+
+def getRotationBySplitLine(splitLine):
+	'Get the complex rotation from the split gcode line.'
+	return complex(splitLine[1].replace('(', '').replace(')', ''))
 
 def getSplitLineBeforeBracketSemicolon(line):
 	'Get the split line before a bracket or semicolon.'
@@ -195,13 +206,6 @@ def isProcedureDoneOrFileIsEmpty(gcodeText, procedure):
 	if gcodeText == '':
 		return True
 	return isProcedureDone(gcodeText, procedure)
-
-def getFirstWordIndexReverse(firstWord, lines, startIndex):
-	'Parse gcode in reverse order until the first word if there is one, otherwise return -1.'
-	for lineIndex in xrange(len(lines) - 1, startIndex - 1, -1):
-		if firstWord == getFirstWord(getSplitLineBeforeBracketSemicolon(lines[lineIndex])):
-			return lineIndex
-	return -1
 
 def isThereAFirstWord(firstWord, lines, startIndex):
 	'Parse gcode until the first word if there is one.'
@@ -269,7 +273,7 @@ class DistanceFeedRate:
 
 	def addGcodeFromLoop(self, loop, z):
 		'Add the gcode loop.'
-		euclidean.addSurroundingLoopBeginning(self, loop, z)
+		euclidean.addNestedRingBeginning(self, loop, z)
 		self.addPerimeterBlock(loop, z)
 		self.addLine('(</boundaryPerimeter>)')
 		self.addLine('(</nestedRing>)')
@@ -357,6 +361,10 @@ class DistanceFeedRate:
 		'Get the start of the arc line.'
 		return '%s X%s Y%s Z%s' % (firstWord, self.getRounded(location.x), self.getRounded(location.y), self.getRounded(location.z))
 
+	def getInfillBoundaryLine(self, location):
+		'Get infill boundary gcode line.'
+		return '(<infillPoint> X%s Y%s Z%s </infillPoint>)' % (self.getRounded(location.x), self.getRounded(location.y), self.getRounded(location.z))
+
 	def getLinearGcodeMovement(self, point, z):
 		'Get a linear gcode movement.'
 		return 'G1 X%s Y%s Z%s' % ( self.getRounded( point.real ), self.getRounded( point.imag ), self.getRounded(z) )
@@ -390,6 +398,5 @@ class DistanceFeedRate:
 
 	def parseSplitLine(self, firstWord, splitLine):
 		'Parse gcode split line and store the parameters.'
-		firstWord = getWithoutBracketsEqualTab(firstWord)
-		if firstWord == 'decimalPlacesCarried':
+		if firstWord == '(<decimalPlacesCarried>':
 			self.decimalPlacesCarried = int(splitLine[1])

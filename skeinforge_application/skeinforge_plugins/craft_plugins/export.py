@@ -9,10 +9,43 @@ http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Export
 The default 'Activate Export' checkbox is on.  When it is on, the functions described below will work, when it is off, the functions will not be called.
 
 ==Settings==
+===Add Descriptive Extension===
+Default is off.
+
+When selected, key profile values will be added as an extension to the gcode file.  For example:
+test.04hx06w_03fill_2cx2r_33EL.gcode
+
+would mean:
+
+* . (Carve section.)
+* 04h = 'Layer Thickness (mm):' 0.4
+* x
+* 06w = 0.6 width i.e. 0.4 times 'Perimeter Width over Thickness (ratio):' 1.5
+* _ (Fill section.)
+* 03fill = 'Infill Solidity (ratio):' 0.3
+* _ (Multiply section; if there is one column and one row then this section is not shown.)
+* 2c = 'Number of Columns (integer):' 2
+* x
+* 2r = 'Number of Rows (integer):' 2.
+* _ (Speed section.)
+* 33EL = 'Feed Rate (mm/s):' 33.0 and 'Flow Rate Setting (float):' 33.0.  If either value has a positive value after the decimal place then this is also shown, but if it is zero it is hidden.  Also, if the values differ (which they shouldn't with 5D volumetrics) then each should be displayed separately.  For example, 35.2E30L = 'Feed Rate (mm/s):' 35.2 and 'Flow Rate Setting (float):' 30.0.
+
+===Add Profile Extension===
+Default is off.
+
+When selected, the current profile will be added to the file extension.  For example:
+test.my_profile_name.gcode
+
+===Add Timestamp Extension===
+Default is off.
+
+When selected, the current date and time is added as an extension in format YYYYmmdd_HHMMSS (so it is sortable if one has many files).  For example:
+test.my_profile_name.20110613_220113.gcode
+
 ===Also Send Output To===
 Default is empty.
 
-Defines the output name for sending to a file or pipe.  A common choice is sys.stdout to print the output in the shell screen.  Another common choice is sys.stderr.  With the empty default, nothing will be done.  If the value is anything else, the output will be written to that file name.
+Defines the output name for sending to a file or pipe.  A common choice is stdout to print the output in the shell screen.  Another common choice is stderr.  With the empty default, nothing will be done.  If the value is anything else, the output will be written to that file name.
 
 ===Comment Choice===
 Default is 'Delete All Comments'.
@@ -82,6 +115,7 @@ import time
 
 
 __author__ = 'Enrique Perez (perez_enrique@yahoo.com)'
+__credits__ = 'Gary Hodgson <http://garyhodgson.com/reprap/2011/06/hacking-skeinforge-export-module/>'
 __date__ = '$Date: 2008/21/04 $'
 __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agpl.html'
 
@@ -95,6 +129,52 @@ def getCraftedTextFromText(gcodeText, repository=None):
 	if not repository.activateExport.value:
 		return gcodeText
 	return ExportSkein().getCraftedGcode(repository, gcodeText)
+
+def getDescriptionCarve(lines):
+	'Get the description for carve.'
+	descriptionCarve = ''
+	layerThicknessString = getSettingString(lines, 'carve', 'Layer Thickness')
+	if layerThicknessString != None:
+		descriptionCarve += layerThicknessString.replace('.', '') + 'h'
+	perimeterWidthString = getSettingString(lines, 'carve', 'Perimeter Width over Thickness')
+	if perimeterWidthString != None:
+		descriptionCarve += 'x%sw' % str(float(perimeterWidthString) * float(layerThicknessString)).replace('.', '')
+	return descriptionCarve
+
+def getDescriptionFill(lines):
+	'Get the description for fill.'
+	activateFillString = getSettingString(lines, 'fill', 'Activate Fill')
+	if activateFillString == None or activateFillString == 'False':
+		return ''
+	infillSolidityString = getSettingString(lines, 'fill', 'Infill Solidity')
+	return '_' + infillSolidityString.replace('.', '') + 'fill'
+
+def getDescriptionMultiply(lines):
+	'Get the description for multiply.'
+	activateMultiplyString = getSettingString(lines, 'multiply', 'Activate Multiply')
+	if activateMultiplyString == None or activateMultiplyString == 'False':
+		return ''
+	columnsString = getSettingString(lines, 'multiply', 'Number of Columns')
+	rowsString = getSettingString(lines, 'multiply', 'Number of Rows')
+	if columnsString == '1' and rowsString == '1':
+		return ''
+	return '_%scx%sr' % (columnsString, rowsString)
+
+def getDescriptionSpeed(lines):
+	'Get the description for speed.'
+	activateSpeedString = getSettingString(lines, 'speed', 'Activate Speed')
+	if activateSpeedString == None or activateSpeedString == 'False':
+		return ''
+	feedRateString = getSettingString(lines, 'speed', 'Feed Rate')
+	flowRateString = getSettingString(lines, 'speed', 'Flow Rate')
+	if feedRateString == flowRateString:
+		return '_%sEL' % feedRateString.replace('.0', '')
+	return '_%sE%sL' % (feedRateString.replace('.0', ''), flowRateString.replace('.0', ''))
+
+def getDescriptiveExtension(gcodeText):
+	'Get the descriptive extension.'
+	lines = archive.getTextLines(gcodeText)
+	return '.' + getDescriptionCarve(lines) + getDescriptionFill(lines) + getDescriptionMultiply(lines) + getDescriptionSpeed(lines)
 
 def getDistanceGcode(exportText):
 	'Get gcode lines with distance variable added.'
@@ -112,6 +192,14 @@ def getDistanceGcode(exportText):
 				print( distance )
 			oldLocation = location
 	return exportText
+
+def getFirstValue(gcodeText, word):
+	'Get the value from the first line which starts with the given word.'
+	for line in archive.getTextLines(gcodeText):
+		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
+		if gcodec.getFirstWord(splitLine) == word:
+			return splitLine[1]
+	return ''
 
 def getNewRepository():
 	'Get new repository.'
@@ -137,15 +225,35 @@ def getSelectedPluginModule( plugins ):
 			return archive.getModuleWithDirectoryPath( plugin.directoryPath, plugin.name )
 	return None
 
-def sendOutputTo(text, toValue):
+def getSettingString(lines, procedureName, settingNameStart):
+	'Get the setting value from the lines, return None if there is no setting starting with that name.'
+	settingNameStart = settingNameStart.replace(' ', '_')
+	for line in lines:
+		splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
+		firstWord = None
+		if len(splitLine) > 0:
+			firstWord = splitLine[0]
+		if firstWord == '(<setting>':
+			if len(splitLine) > 4:
+				if splitLine[1] == procedureName and splitLine[2].startswith(settingNameStart):
+					return splitLine[3]
+		elif firstWord == '(</settings>)':
+			return None
+	return None
+
+def sendOutputTo(outputTo, text):
 	'Send output to a file or a standard output.'
-	if toValue == 'sys.stderr':
-		print(text, ' ', '\n', sys.stderr)
+	if outputTo.endswith('stderr'):
+		sys.stderr.write(text)
+		sys.stderr.write('\n')
+		sys.stderr.flush()
 		return
-	if toValue == 'sys.stdout':
-		print(text, ' ', '\n', sys.stdout)
+	if outputTo.endswith('stdout'):
+		sys.stdout.write(text)
+		sys.stdout.write('\n')
+		sys.stdout.flush()
 		return
-	archive.writeFileText(toValue, text)
+	archive.writeFileText(outputTo, text)
 
 def writeOutput(fileName, shouldAnalyze=True):
 	'Export a gcode linear move file.'
@@ -158,20 +266,29 @@ def writeOutput(fileName, shouldAnalyze=True):
 	fileNameSuffix = fileName[: fileName.rfind('.')]
 	if repository.addExportSuffix.value:
 		fileNameSuffix += '_export'
-	fileNameSuffix += '.' + repository.fileExtension.value
 	gcodeText = gcodec.getGcodeFileText(fileName, '')
+	if repository.addProfileExtension.value:
+		fileNameSuffix += '.' + getFirstValue(gcodeText, '(<profileName>')
+	if repository.addDescriptiveExtension.value:
+		fileNameSuffix += getDescriptiveExtension(gcodeText)
+	if repository.addTimestampExtension.value:
+		fileNameSuffix += '.' + getFirstValue(gcodeText, '(<timeStampPreface>')
+	fileNameSuffix += '.' + repository.fileExtension.value
 	procedures = skeinforge_craft.getProcedures('export', gcodeText)
-	gcodeText = skeinforge_craft.getChainTextFromProcedures(fileName, procedures[ : - 1 ], gcodeText)
+	gcodeText = skeinforge_craft.getChainTextFromProcedures(fileName, procedures[: -1], gcodeText)
 	if gcodeText == '':
 		return None
+	fileNamePenultimate = fileName[: fileName.rfind('.')] + '_penultimate.gcode'
+	filePenultimateWritten = False
 	if repository.savePenultimateGcode.value:
-		penultimateFileName = fileName[: fileName.rfind('.')] + '_penultimate.gcode'
-		archive.writeFileText(penultimateFileName, gcodeText)
-		print('The penultimate file is saved as ' + archive.getSummarizedFileName(penultimateFileName))
+		archive.writeFileText(fileNamePenultimate, gcodeText)
+		filePenultimateWritten = True
+		print('The penultimate file is saved as ' + archive.getSummarizedFileName(fileNamePenultimate))
 	exportGcode = getCraftedTextFromText(gcodeText, repository)
 	window = None
 	if shouldAnalyze:
-		window = skeinforge_analyze.writeOutput(fileName, fileNameSuffix, gcodeText)
+		window = skeinforge_analyze.writeOutput(fileName, fileNamePenultimate, fileNameSuffix,
+			filePenultimateWritten, gcodeText)
 	replaceableExportGcode = None
 	selectedPluginModule = getSelectedPluginModule(repository.exportPlugins)
 	if selectedPluginModule == None:
@@ -188,7 +305,7 @@ def writeOutput(fileName, shouldAnalyze=True):
 	if repository.alsoSendOutputTo.value != '':
 		if replaceableExportGcode == None:
 			replaceableExportGcode = selectedPluginModule.getOutput(exportGcode)
-		sendOutputTo(replaceableExportGcode, repository.alsoSendOutputTo.value)
+		sendOutputTo(repository.alsoSendOutputTo.value, replaceableExportGcode)
 	print('It took %s to export the file.' % euclidean.getDurationString(time.time() - startTime))
 	return window
 
@@ -201,7 +318,10 @@ class ExportRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Export', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Export')
 		self.activateExport = settings.BooleanSetting().getFromValue('Activate Export', self, True)
+		self.addDescriptiveExtension = settings.BooleanSetting().getFromValue('Add Descriptive Extension', self, False)
 		self.addExportSuffix = settings.BooleanSetting().getFromValue('Add Export Suffix', self, True)
+		self.addProfileExtension = settings.BooleanSetting().getFromValue('Add Profile Extension', self, False)
+		self.addTimestampExtension = settings.BooleanSetting().getFromValue('Add Timestamp Extension', self, False)
 		self.alsoSendOutputTo = settings.StringSetting().getFromValue('Also Send Output To:', self, '')
 		self.commentChoice = settings.MenuButtonDisplay().getFromName('Comment Choice:', self)
 		self.doNotDeleteComments = settings.MenuRadio().getFromMenuButtonDisplay(self.commentChoice, 'Do Not Delete Comments', self, False)
@@ -275,6 +395,8 @@ class ExportSkein:
 		firstWord = splitLine[0]
 		if firstWord == '(</crafting>)':
 			self.crafting = False
+		elif firstWord == '(<decimalPlacesCarried>':
+			self.decimalPlacesExported = int(splitLine[1]) - 1
 		if self.repository.deleteAllComments.value or (self.repository.deleteCraftingComments.value and self.crafting):
 			if firstWord[0] == '(':
 				return
@@ -301,7 +423,7 @@ def main():
 	if len(sys.argv) > 1:
 		writeOutput(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == '__main__':
 	main()

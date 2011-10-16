@@ -75,7 +75,7 @@ class FlowRepository:
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.flow.html', self )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Flow', self, '')
-		self.activateFlow = settings.BooleanSetting().getFromValue('Activate Flow:', self, True )
+		self.activateFlow = settings.BooleanSetting().getFromValue('Activate Flow', self, True )
 		self.flowRate = settings.FloatSpin().getFromValue( 50.0, 'Flow Rate (arbitrary units):', self, 250.0, 210.0 )
 		self.executeTitle = 'Flow'
 
@@ -139,7 +139,7 @@ def main():
 	if len(sys.argv) > 1:
 		writeOutput(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

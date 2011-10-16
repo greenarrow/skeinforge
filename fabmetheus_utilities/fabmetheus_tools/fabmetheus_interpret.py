@@ -45,16 +45,16 @@ def getCarving(fileName):
 		return None
 	return pluginModule.getCarving(fileName)
 
+def getGNUTranslatorFilesUnmodified():
+	"Get the file types from the translators in the import plugins folder."
+	return archive.getFilesWithFileTypesWithoutWords(getImportPluginFileNames())
+
 def getGNUTranslatorGcodeFileTypeTuples():
 	"Get the file type tuples from the translators in the import plugins folder plus gcode."
 	fileTypeTuples = getTranslatorFileTypeTuples()
 	fileTypeTuples.append( ('Gcode text files', '*.gcode') )
 	fileTypeTuples.sort()
 	return fileTypeTuples
-
-def getGNUTranslatorFilesUnmodified():
-	"Get the file types from the translators in the import plugins folder."
-	return archive.getFilesWithFileTypesWithoutWords(getImportPluginFileNames())
 
 def getImportPluginFileNames():
 	"Get interpret plugin fileNames."

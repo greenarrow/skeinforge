@@ -49,21 +49,47 @@ def addCircleIntersectionLoop(circleIntersectionLoop, circleIntersections):
 		print(circleIntersection)
 
 def addEndCap(begin, end, points, radius):
-	'Get a pair of side points.'
-	endMinusBegin = end - begin
-	endMinusBeginLength = abs(endMinusBegin)
-	points.append(begin)
-	if endMinusBeginLength <= 0.0:
+	'Get circular end cap.'
+	beginMinusEnd = begin - end
+	beginMinusEndLength = abs(beginMinusEnd)
+	if beginMinusEndLength <= 0.0:
+		points.append(begin)
 		return
-	endMinusBegin *= radius / endMinusBeginLength
-	perpendicular = complex(-endMinusBegin.imag, endMinusBegin.real)
-	beginTowardEnd = begin + endMinusBegin
-	points.append(beginTowardEnd + perpendicular)
-	points.append(beginTowardEnd - perpendicular)
-	beginTowardEndPart = begin + 0.25 * endMinusBegin
-	perpendicularPart = 0.6 * perpendicular
-	points.append(beginTowardEndPart + perpendicularPart)
-	points.append(beginTowardEndPart - perpendicularPart)
+	beginMinusEnd *= radius / beginMinusEndLength
+	perpendicular = complex(-beginMinusEnd.imag, beginMinusEnd.real)
+	numberOfSides = 20 # to end up with close to unit length corners, 5 * 4
+	numberOfPositiveSides = numberOfSides / 2
+	totalAngle = 0.0
+	angle = euclidean.globalTau / float(numberOfSides)
+	# dotProductMultiplier to compensate for the corner outset in addInsetPointFromClockwiseTriple
+	dotProductMultiplier = 2.0 - 1.0 / math.cos(0.5 * angle)
+	for sideIndex in xrange(numberOfPositiveSides + 1):
+		circumferentialPoint = math.sin(totalAngle) * beginMinusEnd + math.cos(totalAngle) * perpendicular
+		points.append(begin + circumferentialPoint * dotProductMultiplier)
+		totalAngle += angle
+
+def addHalfPath(path, points, radius, thresholdRatio=0.9):
+	'Add the points from every point on a half path and between points.'
+	lessThanRadius = 0.75 * radius
+	for pointIndex in xrange(len(path) - 1):
+		begin = path[pointIndex]
+		center = path[pointIndex + 1]
+		centerBegin = getWiddershinsByLength(begin, center, radius)
+		if centerBegin != None:
+			addPointsFromSegment(begin + centerBegin, center + centerBegin, points, lessThanRadius, thresholdRatio)
+		endIndex = pointIndex + 2
+		if endIndex < len(path):
+			end = path[endIndex]
+			centerEnd = getWiddershinsByLength(center, end, radius)
+			if centerBegin != None and centerEnd != None:
+				centerPerpendicular = 0.5 * (centerBegin + centerEnd)
+				points.append(center + centerPerpendicular)
+				if euclidean.getCrossProduct(centerBegin, centerEnd) < 0.0:
+					points.append(center + centerBegin)
+					points.append(center + centerEnd)
+			else:
+				points.append(center)
+	addEndCap(path[0], path[1], points, radius)
 
 def addInsetPointFromClockwiseTriple(begin, center, end, loop, radius):
 	'Get inset point with possible intersection from clockwise triple, out from widdershins loop.'
@@ -78,11 +104,13 @@ def addInsetPointFromClockwiseTriple(begin, center, end, loop, radius):
 	if endMinusCenterLength > 0.0:
 		endMinusCenterClockwise = complex(endMinusCenter.imag, -endMinusCenter.real) / endMinusCenterLength
 	if centerMinusBeginClockwise == None and endMinusCenterClockwise == None:
-		return None
+		return
 	if centerMinusBeginClockwise == None:
 		loop.append(center + endMinusCenterClockwise * radius)
+		return
 	if endMinusCenterClockwise == None:
 		loop.append(center + centerMinusBeginClockwise * radius)
+		return
 	centerClockwise = 0.5 * (centerMinusBeginClockwise + endMinusCenterClockwise)
 	dotProduct = euclidean.getDotProduct(centerMinusBeginClockwise, centerClockwise)
 	loop.append(center + centerClockwise * radius / max(0.4, abs(dotProduct))) # 0.4 to avoid pointy corners
@@ -107,7 +135,7 @@ def addPointsFromSegment( pointBegin, pointEnd, points, radius, thresholdRatio=0
 	thresholdRadius = radius * thresholdRatio # a higher number would be faster but would leave bigger dangling loops and extra dangling loops.
 	thresholdDiameter = thresholdRadius + thresholdRadius
 	segment = pointEnd - pointBegin
-	segmentLength = abs( segment )
+	segmentLength = abs(segment)
 	extraCircles = int( math.floor( segmentLength / thresholdDiameter ) )
 	if extraCircles < 1:
 		return
@@ -135,15 +163,15 @@ def directLoop(isWiddershins, loop):
 	if euclidean.isWiddershins(loop) != isWiddershins:
 		loop.reverse()
 
-def directLoops(isWiddershins, loops):
-	'Direct the loops.'
-	for loop in loops:
-		directLoop(isWiddershins, loop)
-
 def directLoopLists(isWiddershins, loopLists):
 	'Direct the loop lists.'
 	for loopList in loopLists:
 		directLoops(isWiddershins, loopList)
+
+def directLoops(isWiddershins, loops):
+	'Direct the loops.'
+	for loop in loops:
+		directLoop(isWiddershins, loop)
 
 def getAroundsFromLoop(loop, radius, thresholdRatio=0.9):
 	'Get the arounds from the loop.'
@@ -155,14 +183,26 @@ def getAroundsFromLoops( loops, radius, thresholdRatio=0.9 ):
 
 def getAroundsFromPath(path, radius, thresholdRatio=0.9):
 	'Get the arounds from the path.'
-	return getAroundsFromPoints(getPointsFromPath(path, 1.01 * abs(radius), thresholdRatio), radius)
+	radius = abs(radius)
+	points = getPointsFromPath(path, radius, thresholdRatio)
+	return getAroundsFromPathPoints(points, radius, thresholdRatio=0.9)
+
+def getAroundsFromPathPoints(points, radius, thresholdRatio=0.9):
+	'Get the arounds from the path.'
+	centers = getCentersFromPoints(points, 0.8 * radius)
+	arounds = []
+	for center in centers:
+		if euclidean.isWiddershins(center):
+			arounds.append(euclidean.getSimplifiedPath(center, radius))
+	return arounds
 
 def getAroundsFromPaths(paths, radius, thresholdRatio=0.9):
 	'Get the arounds from the path.'
+	radius = abs(radius)
 	points = []
 	for path in paths:
-		points += getPointsFromPath(path, 1.01 * abs(radius), thresholdRatio)
-	return getAroundsFromPoints(points, radius)
+		points += getPointsFromPath(path, radius, thresholdRatio)
+	return getAroundsFromPathPoints(points, radius, thresholdRatio=0.9)
 
 def getAroundsFromPoints( points, radius ):
 	'Get the arounds from the points.'
@@ -212,6 +252,16 @@ def getCentersFromPoints(points, radius):
 	circleNodes = getCircleNodesFromPoints(points, abs(radius))
 	return getCentersFromCircleNodes(circleNodes, abs(radius))
 
+def getCircleIntersectionLoops( circleIntersections ):
+	'Get all the loops going through the circle intersections.'
+	circleIntersectionLoops = []
+	for circleIntersection in circleIntersections:
+		if not circleIntersection.steppedOn:
+			circleIntersectionLoop = [ circleIntersection ]
+			circleIntersectionLoops.append( circleIntersectionLoop )
+			addCircleIntersectionLoop( circleIntersectionLoop, circleIntersections )
+	return circleIntersectionLoops
+
 def getCircleIntersectionsFromCircleNodes(circleNodes):
 	'Get all the circle intersections which exist between all the circle nodes.'
 	if len( circleNodes ) < 1:
@@ -241,16 +291,6 @@ def getCircleIntersectionsFromCircleNodes(circleNodes):
 				circleNodeAhead.circleIntersections.append(circleIntersectionBackward)
 				index += 1
 	return circleIntersections
-
-def getCircleIntersectionLoops( circleIntersections ):
-	'Get all the loops going through the circle intersections.'
-	circleIntersectionLoops = []
-	for circleIntersection in circleIntersections:
-		if not circleIntersection.steppedOn:
-			circleIntersectionLoop = [ circleIntersection ]
-			circleIntersectionLoops.append( circleIntersectionLoop )
-			addCircleIntersectionLoop( circleIntersectionLoop, circleIntersections )
-	return circleIntersectionLoops
 
 def getCircleNodesFromLoop(loop, radius, thresholdRatio=0.9):
 	'Get the circle nodes from every point on a loop and between points.'
@@ -387,34 +427,14 @@ def getPointsFromLoops(loops, radius, thresholdRatio=0.9):
 
 def getPointsFromPath(path, radius, thresholdRatio=0.9):
 	'Get the points from every point on a path and between points.'
+	if len(path) < 1:
+		return []
+	if len(path) < 2:
+		return path
 	radius = abs(radius)
-	halfRadius = 0.5 * radius
 	points = []
-	for pointIndex in xrange(len(path) - 1):
-		begin = path[ pointIndex ]
-		end = path[pointIndex + 1]
-		perpendicular = getWiddershinsByLength(begin, end, halfRadius)
-		if perpendicular != None:
-			addPointsFromSegment(begin + perpendicular, end + perpendicular, points, radius, thresholdRatio)
-			addPointsFromSegment(begin - perpendicular, end - perpendicular, points, radius, thresholdRatio)
-	for pointIndex in xrange(1,len(path) - 1):
-		begin = path[pointIndex - 1]
-		center = path[pointIndex]
-		end = path[pointIndex + 1]
-		centerBegin = getWiddershinsByLength(center, begin, halfRadius)
-		centerEnd = getWiddershinsByLength(end, center, halfRadius)
-		if centerBegin != None and centerEnd != None:
-			centerPerpendicular = 0.5 * (centerBegin + centerEnd)
-			points.append(center + centerPerpendicular)
-			points.append(center - centerPerpendicular)
-		else:
-			points.append(center)
-	if len(path) > 1:
-		quarterRadius = 0.5 * halfRadius
-		addEndCap(path[0], path[1], points, halfRadius)
-		addEndCap(path[-1], path[-2], points, halfRadius)
-	else:
-		points.append(path[0])
+	addHalfPath(path, points, radius, thresholdRatio)
+	addHalfPath(path[: : -1], points, radius, thresholdRatio)
 	return points
 
 def getSimplifiedInsetFromClockwiseLoop(loop, radius):
@@ -457,7 +477,7 @@ def isLoopIntersectingLoop( anotherLoop, loop ):
 		pointFirst = loop[pointIndex]
 		pointSecond = loop[(pointIndex + 1) % len(loop)]
 		segment = pointFirst - pointSecond
-		normalizedSegment = euclidean.getNormalized( segment )
+		normalizedSegment = euclidean.getNormalized(segment)
 		segmentYMirror = complex(normalizedSegment.real, -normalizedSegment.imag)
 		segmentFirstPoint = segmentYMirror * pointFirst
 		segmentSecondPoint = segmentYMirror * pointSecond
@@ -495,7 +515,7 @@ def removeIntersection( loop ):
 				if xIntersection > min( behindMidpointRotated.real, behindRotated.real ) and xIntersection < max( behindMidpointRotated.real, behindRotated.real ):
 					intersectionPoint = normalizedSegment * complex( xIntersection, y )
 					loop[ ( pointIndex + len( loop ) - 1 ) % len( loop ) ] = intersectionPoint
-					del loop[ pointIndex ]
+					del loop[pointIndex]
 					return
 
 

@@ -36,9 +36,9 @@ def getNewRepository():
 	'Get new repository.'
 	return fabmetheus_interpret.InterpretRepository()
 
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
+def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWritten, gcodeText=''):
 	"Write file interpretation, if activate interpret is selected."
-	repository = settings.getReadRepository( getNewRepository() )
+	repository = settings.getReadRepository(getNewRepository())
 	if repository.activateInterpret.value:
 		fabmetheus_interpret.getWindowAnalyzeFile(fileName)
 
@@ -48,7 +48,7 @@ def main():
 	if len(sys.argv) > 1:
 		fabmetheus_interpret.getWindowAnalyzeFile(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

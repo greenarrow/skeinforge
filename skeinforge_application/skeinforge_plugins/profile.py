@@ -39,6 +39,10 @@ def addSubmenus( craftTypeName, menu, pluginFileName, pluginPath, profileRadioVa
 		value = isSelected and profileName == profilePluginSettings.profileListbox.value
 		ProfileMenuRadio( pluginFileName, submenu, profileName, profileRadioVar, value )
 
+def addToMenu( master, menu, repository, window ):
+	"Add a tool plugin menu."
+	ProfileMenuSaveListener( menu, window )
+
 def addToProfileMenu( menu ):
 	"Add a profile menu."
 	settings.ToolDialog().addPluginToMenu( menu, __file__[ : __file__.rfind('.') ] )
@@ -49,10 +53,6 @@ def addToProfileMenu( menu ):
 	profileRadioVar = settings.Tkinter.StringVar()
 	for pluginFileName in pluginFileNames:
 		addSubmenus( craftTypeName, menu, pluginFileName, os.path.join( directoryPath, pluginFileName ), profileRadioVar )
-
-def addToMenu( master, menu, repository, window ):
-	"Add a tool plugin menu."
-	ProfileMenuSaveListener( menu, window )
 
 def getNewRepository():
 	'Get new repository.'
@@ -109,7 +109,7 @@ class ProfileMenuSaveListener:
 
 def main():
 	"Display the profile dialog."
-	settings.startMainLoopFromConstructor( getNewRepository() )
+	settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

@@ -19,6 +19,11 @@ If you also want an insulating skirt around the entire object, set 'Layers To' t
 The default 'Activate Skirt' checkbox is off.  When it is on, the functions described below will work, when it is off, the functions will not be called.
 
 ==Settings==
+===Convex===
+Default is on.
+
+When selected, the skirt will be convex, going around the model with only convex angles.  If convex is not selected, the skirt will hug the model, going into every nook and cranny.
+
 ===Gap over Perimeter Width===
 Default is three.
 
@@ -119,7 +124,7 @@ class SkirtRepository:
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.skirt.html', self)
 		self.fileNameInput = settings.FileNameInput().getFromFileName(
 			fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Skirt', self, '')
-		self.activateSkirt = settings.BooleanSetting().getFromValue('Activate Skirt:', self, False)
+		self.activateSkirt = settings.BooleanSetting().getFromValue('Activate Skirt', self, False)
 		self.convex = settings.BooleanSetting().getFromValue('Convex:', self, True)
 		self.gapOverPerimeterWidth = settings.FloatSpin().getFromValue(
 			1.0, 'Gap over Perimeter Width (ratio):', self, 5.0, 3.0)

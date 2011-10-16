@@ -120,7 +120,7 @@ class WidenRepository:
 			fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Widen', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute(
 			'http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Widen')
-		self.activateWiden = settings.BooleanSetting().getFromValue('Activate Widen:', self, False)
+		self.activateWiden = settings.BooleanSetting().getFromValue('Activate Widen', self, False)
 		self.executeTitle = 'Widen'
 
 	def execute(self):

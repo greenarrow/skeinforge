@@ -142,8 +142,7 @@ class ClipSkein:
 			removeTable = {}
 			euclidean.addLoopToPixelTable( self.loopPath.path, removeTable, self.layerPixelWidth )
 			euclidean.removePixelTableFromPixelTable( removeTable, self.layerPixelTable )
-			self.loopPath.path = euclidean.getClippedLoopPath( self.clipLength, self.loopPath.path )
-			self.loopPath.path = euclidean.getSimplifiedPath( self.loopPath.path, self.perimeterWidth )
+			self.loopPath.path = euclidean.getClippedSimplifiedLoopPath(self.clipLength, self.loopPath.path, self.perimeterWidth)
 			euclidean.addLoopToPixelTable( self.loopPath.path, self.layerPixelTable, self.layerPixelWidth )
 		if self.oldWiddershins == None:
 			self.addGcodeFromThreadZ( self.loopPath.path, self.loopPath.z )
@@ -166,7 +165,7 @@ class ClipSkein:
 			return False
 		locationComplex = location.dropAxis()
 		segment = locationComplex - path[-1]
-		segmentLength = abs( segment )
+		segmentLength = abs(segment)
 		if segmentLength <= 0.0:
 			return True
 		if segmentLength > self.maximumConnectionDistance:
@@ -201,7 +200,7 @@ class ClipSkein:
 		"Parse gcode text and store the clip gcode."
 		self.lines = archive.getTextLines(gcodeText)
 		self.parseInitialization( clipRepository )
-		for self.lineIndex in xrange( self.lineIndex, len(self.lines) ):
+		for self.lineIndex in xrange(self.lineIndex, len(self.lines)):
 			line = self.lines[self.lineIndex]
 			self.parseLine(line)
 		return self.distanceFeedRate.output.getvalue()
@@ -265,6 +264,7 @@ class ClipSkein:
 				self.distanceFeedRate.addLine('(<procedureName> clip </procedureName>)')
 				return
 			elif firstWord == '(<perimeterWidth>':
+				self.distanceFeedRate.addTagBracketedLine('clipOverPerimeterWidth', clipRepository.clipOverPerimeterWidth.value)
 				self.perimeterWidth = float(splitLine[1])
 				absolutePerimeterWidth = abs( self.perimeterWidth )
 				self.clipLength = clipRepository.clipOverPerimeterWidth.value * self.perimeterWidth
@@ -343,7 +343,7 @@ def main():
 	if len(sys.argv) > 1:
 		writeOutput(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

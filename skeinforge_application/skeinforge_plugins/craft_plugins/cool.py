@@ -26,7 +26,7 @@ Default is 'Slow Down'.
 When selected, cool will add orbits with the extruder off to give the layer time to cool, so that the next layer is not extruded on a molten base.  The orbits will be around the largest island on that layer.  Orbit should only be chosen if you can not upgrade to a stepper extruder.
 
 ====Slow Down====
-When selected, cool will slow down the extruder so that it will take the minimum layer time to extrude the layer.  DC motors do not operate properly at very slow flow rates, so if you have a DC motor extruder, you should upgrade to a stepper extruder, but if you can't do that, you can try using the 'Orbit' option.
+When selected, cool will slow down the extruder so that it will take the minimum layer time to extrude the layer.  DC motors do not operate properly at slow flow rates, so if you have a DC motor extruder, you should upgrade to a stepper extruder, but if you can't do that, you can try using the 'Orbit' option.
 
 ===Maximum Cool===
 Default is 2 degrees Celcius.
@@ -56,6 +56,12 @@ If there is a file with the name of the "Name of Cool End File" setting, it will
 Default is cool_start.gcode.
 
 If there is a file with the name of the "Name of Cool Start File" setting, it will be added to the end of the orbits.
+		self.orbitalOutset = settings.FloatSpin().getFromValue(1.0, 'Orbital Outset (millimeters):', self, 5.0, 2.0)
+
+===Orbital Outset===
+Default is 2 millimeters.
+
+When the orbit cool type is selected, the orbits will be outset around the largest island by 'Orbital Outset' millimeters.  If 'Orbital Outset' is negative, the orbits will be inset instead.
 
 ===Turn Fan On at Beginning===
 Default is on.
@@ -150,6 +156,7 @@ class CoolRepository:
 		self.nameOfCoolEndFile = settings.StringSetting().getFromValue('Name of Cool End File:', self, 'cool_end.gcode')
 		self.nameOfCoolStartFile = settings.StringSetting().getFromValue('Name of Cool Start File:', self, 'cool_start.gcode')
 		settings.LabelSeparator().getFromRepository(self)
+		self.orbitalOutset = settings.FloatSpin().getFromValue(1.0, 'Orbital Outset (millimeters):', self, 5.0, 2.0)
 		self.turnFanOnAtBeginning = settings.BooleanSetting().getFromValue('Turn Fan On at Beginning', self, True)
 		self.turnFanOffAtEnding = settings.BooleanSetting().getFromValue('Turn Fan Off at Ending', self, True)
 		self.executeTitle = 'Cool'
@@ -171,6 +178,7 @@ class CoolSkein:
 		self.feedRateMinute = 960.0
 		self.highestZ = 1.0
 		self.isBridgeLayer = False
+		self.isExtruderActive = False
 		self.layerCount = settings.LayerCount()
 		self.lineIndex = 0
 		self.lines = None
@@ -184,7 +192,9 @@ class CoolSkein:
 		'Add the minimum radius cool orbits.'
 		if len(self.boundaryLayer.loops) < 1:
 			return
-		insetBoundaryLoops = intercircle.getInsetLoopsFromLoops(self.perimeterWidth, self.boundaryLayer.loops)
+		insetBoundaryLoops = self.boundaryLayer.loops
+		if abs(self.repository.orbitalOutset.value) > 0.1 * abs(self.perimeterWidth):
+			insetBoundaryLoops = intercircle.getInsetLoopsFromLoops(-self.repository.orbitalOutset.value, self.boundaryLayer.loops)
 		if len(insetBoundaryLoops) < 1:
 			insetBoundaryLoops = self.boundaryLayer.loops
 		largestLoop = euclidean.getLargestLoop(insetBoundaryLoops)
@@ -244,7 +254,6 @@ class CoolSkein:
 	def getCoolMove(self, line, location, splitLine):
 		'Add line to time spent on layer.'
 		self.feedRateMinute = gcodec.getFeedRateMinute(self.feedRateMinute, splitLine)
-		self.highestZ = max(location.z, self.highestZ)
 		self.addFlowRateMultipliedLineIfNecessary(self.oldFlowRate)
 		return self.distanceFeedRate.getLineWithFeedRate(self.multiplier * self.feedRateMinute, line, splitLine)
 
@@ -292,6 +301,33 @@ class CoolSkein:
 				return layerTime
 		return layerTime
 
+	def getLayerTimeActive(self):
+		'Get the time the extruder spends on the layer while active.'
+		feedRateMinute = self.feedRateMinute
+		isExtruderActive = self.isExtruderActive
+		layerTime = 0.0
+		lastThreadLocation = self.oldLocation
+		for lineIndex in xrange(self.lineIndex, len(self.lines)):
+			line = self.lines[lineIndex]
+			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
+			firstWord = gcodec.getFirstWord(splitLine)
+			if firstWord == 'G1':
+				location = gcodec.getLocationFromSplitLine(lastThreadLocation, splitLine)
+				feedRateMinute = gcodec.getFeedRateMinute(feedRateMinute, splitLine)
+				if lastThreadLocation != None and isExtruderActive:
+					feedRateSecond = feedRateMinute / 60.0
+					layerTime += location.distance(lastThreadLocation) / feedRateSecond
+				lastThreadLocation = location
+			elif firstWord == 'M101':
+				isExtruderActive = True
+			elif firstWord == 'M103':
+				isExtruderActive = False
+			elif firstWord == '(<bridgeRotation>':
+				self.isBridgeLayer = True
+			elif firstWord == '(</layer>)':
+				return layerTime
+		return layerTime
+
 	def parseInitialization(self):
 		'Parse gcode initialization and store the parameters.'
 		for self.lineIndex in xrange(len(self.lines)):
@@ -320,8 +356,14 @@ class CoolSkein:
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
 			location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
-			line = self.getCoolMove(line, location, splitLine)
+			self.highestZ = max(location.z, self.highestZ)
+			if self.isExtruderActive:
+				line = self.getCoolMove(line, location, splitLine)
 			self.oldLocation = location
+		elif firstWord == 'M101':
+			self.isExtruderActive = True
+		elif firstWord == 'M103':
+			self.isExtruderActive = False
 		elif firstWord == 'M104':
 			self.oldTemperature = gcodec.getDoubleAfterFirstLetter(splitLine[1])
 		elif firstWord == 'M108':
@@ -340,7 +382,7 @@ class CoolSkein:
 			if self.repository.orbit.value:
 				self.addOrbitsIfNecessary(remainingOrbitTime)
 			else:
-				self.setMultiplier(layerTime)
+				self.setMultiplier(remainingOrbitTime)
 			z = float(splitLine[1])
 			self.boundaryLayer = euclidean.LoopLayer(z)
 			self.highestZ = max(z, self.highestZ)
@@ -358,9 +400,10 @@ class CoolSkein:
 			self.boundaryLayer.loops.append(self.boundaryLoop)
 		self.distanceFeedRate.addLine(line)
 
-	def setMultiplier(self, layerTime):
+	def setMultiplier(self, remainingOrbitTime):
 		'Set the feed and flow rate multiplier.'
-		self.multiplier = min(1.0, layerTime / self.repository.minimumLayerTime.value)
+		layerTimeActive = self.getLayerTimeActive()
+		self.multiplier = min(1.0, layerTimeActive / (remainingOrbitTime + layerTimeActive))
 
 	def setOperatingFlowString(self, splitLine):
 		'Set the operating flow string from the split line.'

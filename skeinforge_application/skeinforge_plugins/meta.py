@@ -28,7 +28,7 @@ def getNewRepository():
 
 def main():
 	"Display the meta dialog."
-	settings.startMainLoopFromConstructor( getNewRepository() )
+	settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

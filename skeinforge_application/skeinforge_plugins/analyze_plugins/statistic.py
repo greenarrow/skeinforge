@@ -88,7 +88,7 @@ def getWindowAnalyzeFileGivenText( fileName, gcodeText, repository=None):
 	if repository.saveStatistics.value:
 		archive.writeFileMessageEnd('.txt', fileName, statisticGcode, 'The statistics file is saved as ')
 
-def writeOutput( fileName, fileNameSuffix, gcodeText = ''):
+def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWritten, gcodeText=''):
 	"Write statistics for a skeinforge gcode file, if 'Write Statistics File for Skeinforge Chain' is selected."
 	repository = settings.getReadRepository( StatisticRepository() )
 	if gcodeText == '':
@@ -334,7 +334,7 @@ class StatisticSkein:
 		elif firstWord == '(<procedureName>':
 			self.procedures.append(splitLine[1])
 		elif firstWord == '(<profileName>':
-			self.profileName = splitLine[1]
+			self.profileName = line.replace('(<profileName>', '').replace('</profileName>)', '').strip()
 		elif firstWord == '(<version>':
 			self.version = splitLine[1]
 
@@ -344,7 +344,7 @@ def main():
 	if len(sys.argv) > 1:
 		getWindowAnalyzeFile(' '.join(sys.argv[1 :]))
 	else:
-		settings.startMainLoopFromConstructor( getNewRepository() )
+		settings.startMainLoopFromConstructor(getNewRepository())
 
 if __name__ == "__main__":
 	main()

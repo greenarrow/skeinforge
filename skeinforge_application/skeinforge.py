@@ -230,26 +230,35 @@ import os
 import sys
 
 
-# infill or inset bug
-# circle is average radius in drill
-# cutting ahmet
-# smooth http://hydraraptor.blogspot.com/2010/12/frequency-limit.html _extrusion
-# clairvoyance
-# think about changing getOverlapRatio(loop, pointDictionary) < 0.2 to 0.51
-# change topOverBottom in linearbearingexample to pegAngle
-# add links download manual svg_writer, add left right arrow keys to layer
-# change thickness to height in gear xml
-# base xmlelement off xmlatom
-# document announce covex
-# maybe in svgReader if loop intersection with previous union else add
-# think about http://code.google.com/p/skeinarchiver/ and/or undo
-#
 # unimportant
 # minor outline problem when an end path goes through a path, like in the letter A
 # view profile 1 mm thickness
 #
+# document clip is also for skin
+# move M101.. in skin to elif
+# think about http://code.google.com/p/skeinarchiver/ and/or undo
+# work out why skinning sometimes straightens a side of a circle
+# fix open end after clip
+# replace getHorizontalSegmentListsFromLoo.. in fill
+# use shortened infill to determine sparseness
+# no need for completely filled bridge layer
+# skin layers without something over the infill
+# analyze in export
+# add date time 11.01.02|12:08
+# comment search from home panel until there is an input field
+# maybe in svgReader if loop intersection with previous union else add
+# smooth http://hydraraptor.blogspot.com/2010/12/frequency-limit.html _extrusion
 # raftPerimeter outset by maximum thickness
+# double M108 problem by raft
+# fix arc model 'too large for getArcComplexes in svgReader'
+# unpause slow flow rate instead of speeding feed rate
+# set temperature in temperature
+# add links download manual svg_writer, add left right arrow keys to layer
+# infuse _extrusion
+# cutting ahmet
+# When opening a file for craft I wondered if there is an option to set the file type to .stl as it currently defaults to .xml
 # scrollbar/width problem when starting with narrow view like help/meta/profile
+# check inset loop for intersection with rotatedLoopLayer.loops
 # maybe make vectorwrite prominent, not skeiniso, probably not because it doesn't work on Mac
 # move more __file__
 # close, getPillarByLoopLists, addConcave, polymorph original graph section, loop, add step object, add continuous object
@@ -261,7 +270,7 @@ import sys
 # links in layerTemplate
 # del previous, add begin & end if far  get actual path
 # linearbearingexample 15 x 1 x 2, linearbearingcage
-# add date time 11.01.02|12:08
+# remember xy in skeiniso
 # polling
 # connectionfrom, to, connect, xaxis
 # lathe, transform normal in getRemaining, getConnection
@@ -288,6 +297,7 @@ import sys
 # maybe remove default warnings from scale, rotate, translate, transform
 # easy helix
 # write tool; maybe write one deep
+# getElementsByLocalName which is the equivalent of # getElementsByTagName
 #
 #
 # tube
@@ -337,7 +347,6 @@ import sys
 # pixelSet instead of pixelTable for arounds _speed
 #
 #
-# infuse _extrusion
 # add hook _extrusion
 # integral thin width _extrusion
 # layer color, for multilayer start http://reprap.org/pub/Main/MultipleMaterialsFiles/legend.xml _extrusion
@@ -357,7 +366,6 @@ import sys
 # maybe later remove isPerimeterPathInSurroundLoops, once there are no weird fill bugs, also change getHorizontalSegmentListsFromLoopLists
 # save all analyze viewers of the same name except itself, update help menu self.wikiManualPrimary.setUpdateFunction
 # check alterations folder first, if there is something copy it to the home directory, if not check the home directory
-# set temperature in temperature
 # add links to demozendium in help
 # maybe add hop only if long option
 #
@@ -557,14 +565,6 @@ class SkeinforgeRepository:
 		self.profileType = settings.MenuButtonDisplay().getFromName('Profile Type: ', self )
 		self.profileSelection = settings.MenuButtonDisplay().getFromName('Profile Selection: ', self)
 		addToProfileMenu( self.profileSelection, self.profileType, self )
-		settings.LabelDisplay().getFromName('Search:', self )
-		reprapSearch = settings.HelpPage().getFromNameAfterHTTP('members.axion.net/~enrique/search_reprap.html', 'Reprap', self)
-		skeinforgeSearch = settings.HelpPage().getFromNameAfterHTTP('members.axion.net/~enrique/search_skeinforge.html', 'Skeinforge', self )
-		skeinforgeSearch.column += 2
-		webSearch = settings.HelpPage().getFromNameAfterHTTP('members.axion.net/~enrique/search_web.html', 'Web', self)
-		webSearch.column += 4
-		versionText = archive.getFileText( archive.getVersionFileName() )
-		self.version = settings.LabelDisplay().getFromName('Version: ' + versionText, self)
 		settings.LabelDisplay().getFromName('', self)
 		importantFileNames = ['craft', 'profile']
 		getRadioPluginsAddPluginGroupFrame(archive.getSkeinforgePluginsPath(), importantFileNames, getPluginFileNames(), self)
