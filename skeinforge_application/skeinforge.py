@@ -230,52 +230,66 @@ import os
 import sys
 
 
-# document synopsis..
-# no need for completely filled bridge layer
-# analyze in export
-# add date time 11.01.02|12:08
-# double M108 problem by raft
-# unpause slow flow rate instead of speeding feed rate
-# fix arc model 'too large for getArcComplexes in svgReader'
+# document after stretch, then carve, comb, fill, home, inset, oozebane, raft, splodge, temperature once they are updated, maybe later subplugins like export static, maybe later mill cut and coil plugins, maybe later still export plugins & change file extension to output file extension  http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge
+# release
+#
+# command
 #
 # unimportant
 # minor outline problem when an end path goes through a path, like in the letter A
 # view profile 1 mm thickness
+# analyze doesn't save skeinlayer settings, remember xy in skeiniso
 #
-# fix infill on small circles, like 25499 Screw_Holder_stretch.. G1 X39.6221 Y-38.9346 Z14.0001 F960.0
+#
+# resolve getGcodeWithoutDuplication, make better consolidate gcode command function, remove comments from addRaftedLine
 # think about http://code.google.com/p/skeinarchiver/ and/or undo
-# work out why skinning sometimes straightens a side of a circle
-# replace getHorizontalSegmentListsFromLoo.. in fill also change inset algorithm to skin
-# use shortened infill to determine sparseness
-# skin layers without something over the infill
-# maybe in svgReader if loop intersection with previous union else add
-# smooth http://hydraraptor.blogspot.com/2010/12/frequency-limit.html _extrusion
-# raftPerimeter outset by maximum thickness
+# consolidate layerIndex and progress
+# add volume fraction to fill
+# consider removing tower
+# add copy process function getMatchingPlugins if > 0 then if paths do paths else do solid
+# use fileSettingName to change perimeter width to extrusion width, globalSubstitutionDictionary
+# derivation starting with _inset
+# check globalExecutionOrder, ensure that bottom order is really high
 # set temperature in temperature
+# add stretch progress indicator
+# voronoi average location intersection looped inset intercircles
+# skin layers without something over the infill
+# check for last existing then remove unneeded fill code (getLastExistingFillLoops) from euclidean, add fill in penultimate loops
+# backup demozendium links
+# delete commented addInfillPerimeter
+# unpause slow flow rate instead of speeding feed rate
+# replace getRadiusByPrefix with getFloatByPrefixSide(defaultValue, elementNode, prefix + 'radius', sideLength)
+# replace getStrokeRadius in inset and outset with getRadius
+# maybe in svgReader if loop intersection with previous union else add
 # add links download manual svg_writer, add left right arrow keys to layer
+# manipulation derivations
 # infuse _extrusion
 # cutting ahmet
+#
+# comb -> maybe add back running jump look at outside loops only for jump, find closest points, find slightly away inside points, link
+# global simplify pathBetween
+# comb documentation
+#
 # When opening a file for craft I wondered if there is an option to set the file type to .stl as it currently defaults to .xml
-# scrollbar/width problem when starting with narrow view like help/meta/profile
-# check inset loop for intersection with rotatedLoopLayer.loops
+# check inset loop for intersection with loopLayer.loops
 # maybe make vectorwrite prominent, not skeiniso, probably not because it doesn't work on Mac
-# move more __file__
 # close, getPillarByLoopLists, addConcave, polymorph original graph section, loop, add step object, add continuous object
-# hollow top
 # chamber: heated bed off at a layer http://blog.makerbot.com/2011/03/17/if-you-cant-stand-the-heat/
-# packingDensity or density in grid - probably just density
 # derivations for shapes
+# profile copy / rename   /   delete, maybe move craft type to profile
 # think about rectangular getVector3RemoveByPre..
-# links in layerTemplate
 # del previous, add begin & end if far  get actual path
+# bridge infill modifiers only in the bridge infill loop
 # linearbearingexample 15 x 1 x 2, linearbearingcage
-# remember xy in skeiniso
 # polling
 # connectionfrom, to, connect, xaxis
+# move replace from export to alterations
 # lathe, transform normal in getRemaining, getConnection
+# add overview link to crnsdoo index and svg page
 # getConnection of some kind like getConnectionVertexes, getConnection
+# incorporate actual thickness from feed rate and flow rate in statistics for dimension
+# update stretch pictures By design, distance between parallel sides in hexagonal hole are 13mm, 7mm, 6.5mm, round hole diameter's are 8mm, 4mm and 3mm. http://fabmetheus.crsndoo.com/wiki/images/Stretch.png http://fabmetheus.crsndoo.com/wiki/images/thumb/NormalHole.png/180px-NormalHole.png http://fabmetheus.crsndoo.com/wiki/images/thumb/StretchDeformedHole.png/180px-StretchDeformedHole.png
 # xml_creation
-# voronoi average location intersection looped inset intercircles
 # 'fileName, text, repository' commandLineInterface
 # delete: text = text.replace(('\nName                          %sValue\n' % globalSpreadsheetSeparator), ('\n_Name                          %sValue\n' % globalSpreadsheetSeparator))
 # comment search from home panel when there is an input field
@@ -288,16 +302,16 @@ import sys
 # combine xmlelement with csvelement using example.csv & geometry.csv, csv _format, _column, _row, _text
 # pixel, voxel, surfaxel/boxel, lattice, mesh
 # probably not replace getOverlapRatio with getOverlap if getOverlapRatio is never small, always 0.0
-# mesh. for cube, then cyliner, then sphere after lathe
+# mesh. for cube, then cylinder, then sphere after lathe
 # dimension extrude diameter, density
+# superformula http://www.thingiverse.com/thing:12419
+# maybe get rid of testLoops once they are no longer needed
 # thermistor lookup table
-# add overview link to crnsdoo index and svg page
-# stretch add back addAlong
+# stretch maybe add back addAlong
 # import, write, copy examples
 # maybe remove default warnings from scale, rotate, translate, transform
 # easy helix
 # write tool; maybe write one deep
-# getElementsByLocalName which is the equivalent of # getElementsByTagName
 #
 #
 # tube
@@ -316,19 +330,13 @@ import sys
 # dovetail
 # maybe not getNewObject, getNew, addToBoolean
 # work out close and radius
-# maybe try to get rid of comment if possible
 # maybe have add function as well as append for list and string
 # maybe move and give geometryOutput to cube, cylinder, sphere
-#
-# comb -> maybe add back running jump look at outside loops only for jump, find closest points, find slightly away inside points, link
-# global simplify pathBetween
-# comb documentation
 #
 # maybe move widen before bottom
 # maybe add 1 to max layer input to iso in layer_template.svg
 # maybe save all generated_files option
 # table to dictionary
-# check for last existing then remove unneeded fill code (getLastExistingFillLoops) from euclidean
 # remove cool set at end of layer
 # add fan on when hot in chamber
 # maybe measuring rod
@@ -342,28 +350,27 @@ import sys
 #
 #
 # remove index from CircleIntersection remove ahead or behind from CircleIntersection _speed
-# cache surroundingCarves _speed
 # probably not speed up CircleIntersection by performing isWithinCircles before creation _speed
-# pixelSet instead of pixelTable for arounds _speed
+# don't remove brackets in early craft tools _speed
+# check bounding box when subtracting or intersecting boolean geometry
+# get arounds in inset, the inside become extrude loops and the outside below loops _speed
 #
 #
 # add hook _extrusion
 # integral thin width _extrusion
 # layer color, for multilayer start http://reprap.org/pub/Main/MultipleMaterialsFiles/legend.xml _extrusion
-# maybe double height shells option _extrusion
 # maybe raft triple layer base, middle interface with hot loop or ties
 # somehow, add pattern to outside, http://blog.makerbot.com/2010/09/03/lampshades/
 # implement acceleration & collinear removal in penultimate viewers _extrusion
 #
-# rename skeinforge_profile.addListsToCraftTypeRepository to skeinforge_profile.addToCraftTypeRepository after apron
-# basic tool
+# rename skeinforge_profile.addListsToCraftTypeRepository to skeinforge_profile.addToCraftTypeRepository after skirt
+# basic basedit tool
 # arch, ceiling
 # meta setting, rename setting _setting
 # add polish, has perimeter, has cut first layer (False)
 # probably not set addedLocation in distanceFeedRate after arc move
 # maybe horizontal bridging and/or check to see if the ends are standing on anything
 # thin self? check when removing intersecting paths in inset
-# maybe later remove isPerimeterPathInSurroundLoops, once there are no weird fill bugs, also change getHorizontalSegmentListsFromLoopLists
 # save all analyze viewers of the same name except itself, update help menu self.wikiManualPrimary.setUpdateFunction
 # check alterations folder first, if there is something copy it to the home directory, if not check the home directory
 # add links to demozendium in help
@@ -393,11 +400,10 @@ import sys
 # maybe split into source code and documentation sections
 # transform plugins, start with sarrus http://www.thingiverse.com/thing:1425
 # maybe make setting backups
-# maybe settings in gcode or saved versions
 # move skeinforge_utilities to fabmetheus_utilities
 # maybe lathe cutting
 # maybe lathe extrusion
-# maybe lathe millng
+# maybe lathe milling
 # maybe lathe winding & weaving
 #
 #
@@ -425,7 +431,7 @@ import sys
 # maybe carve aoi xml testing and check xml gcode
 # maybe cross hatch support polishing???
 # maybe print svg view from current layer or zero layer in single view
-# maybe check if tower is picking the nearest island
+# maybe check if tower is picking the closest island
 # maybe combine skein classes in fillet
 # maybe isometric svg option
 
@@ -563,7 +569,9 @@ class SkeinforgeRepository:
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge.html', self)
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Skeinforge', self, '')
 		self.profileType = settings.MenuButtonDisplay().getFromName('Profile Type: ', self )
+		self.profileType.columnspan = 6
 		self.profileSelection = settings.MenuButtonDisplay().getFromName('Profile Selection: ', self)
+		self.profileSelection.columnspan = 6
 		addToProfileMenu( self.profileSelection, self.profileType, self )
 		settings.LabelDisplay().getFromName('', self)
 		importantFileNames = ['craft', 'profile']

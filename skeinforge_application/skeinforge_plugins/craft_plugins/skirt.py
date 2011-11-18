@@ -151,7 +151,7 @@ class SkirtSkein:
 		self.layerIndex = -1
 		self.lineIndex = 0
 		self.lines = None
-		self.oldFlowRateInput = None
+		self.oldFlowRate = None
 		self.oldLocation = None
 		self.oldTemperatureInput = None
 		self.skirtFlowRate = None
@@ -159,25 +159,22 @@ class SkirtSkein:
 		self.travelFeedRateMinute = 957.0
 		self.unifiedLoop = LoopCrossDictionary()
 
-	def addFlowRateLineIfDifferent(self, flowRate):
+	def addFlowRate(self, flowRate):
 		'Add a line of temperature if different.'
-		if flowRate == None or flowRate == self.oldFlowRateInput:
-			return
-		self.distanceFeedRate.addLine('M108 S' + euclidean.getFourSignificantFigures(flowRate))
-		self.oldFlowRateInput = flowRate
+		if flowRate != None:
+			self.distanceFeedRate.addLine('M108 S' + euclidean.getFourSignificantFigures(flowRate))
 
 	def addSkirt(self, z):
 		'At skirt at z to gcode output.'
 		self.setSkirtFeedFlowTemperature()
 		self.distanceFeedRate.addLine('(<skirt>)')
-		oldFlowRate = self.oldFlowRateInput
 		oldTemperature = self.oldTemperatureInput
 		self.addTemperatureLineIfDifferent(self.skirtTemperature)
-		self.addFlowRateLineIfDifferent(self.skirtFlowRate)
+		self.addFlowRate(self.skirtFlowRate)
 		for outsetLoop in self.outsetLoops:
 			closedLoop = outsetLoop + [outsetLoop[0]]
 			self.distanceFeedRate.addGcodeFromFeedRateThreadZ(self.feedRateMinute, closedLoop, self.travelFeedRateMinute, z)
-		self.addFlowRateLineIfDifferent(oldFlowRate)
+		self.addFlowRate(self.oldFlowRate)
 		self.addTemperatureLineIfDifferent(oldTemperature)
 		self.distanceFeedRate.addLine('(</skirt>)')
 
@@ -200,7 +197,7 @@ class SkirtSkein:
 		points += euclidean.getPointsByVerticalDictionary(self.perimeterWidth, self.unifiedLoop.verticalDictionary)
 		loops = triangle_mesh.getDescendingAreaOrientedLoops(points, points, 2.5 * self.perimeterWidth)
 		outerLoops = getOuterLoops(loops)
-		outsetLoops = intercircle.getInsetSeparateLoopsFromLoops(-self.skirtOutset, outerLoops)
+		outsetLoops = intercircle.getInsetSeparateLoopsFromLoops(outerLoops, -self.skirtOutset)
 		self.outsetLoops = getOuterLoops(outsetLoops)
 		if self.repository.convex.value:
 			self.outsetLoops = [euclidean.getLoopConvex(euclidean.getConcatenatedList(self.outsetLoops))]
@@ -215,7 +212,7 @@ class SkirtSkein:
 		for self.lineIndex in xrange(self.lineIndex, len(self.lines)):
 			line = self.lines[self.lineIndex]
 			self.parseLine(line)
-		return self.distanceFeedRate.output.getvalue()
+		return gcodec.getGcodeWithoutDuplication('M108', self.distanceFeedRate.output.getvalue())
 
 	def getHorizontalXIntersectionsTable(self, loop):
 		'Get the horizontal x intersections table from the loop.'
@@ -264,8 +261,8 @@ class SkirtSkein:
 			elif firstWord == '(<operatingFeedRatePerSecond>':
 				self.feedRateMinute = 60.0 * float(splitLine[1])
 			elif firstWord == '(<operatingFlowRate>':
-				self.oldFlowRateInput = float(splitLine[1])
-				self.skirtFlowRate = self.oldFlowRateInput
+				self.oldFlowRate = float(splitLine[1])
+				self.skirtFlowRate = self.oldFlowRate
 			elif firstWord == '(<perimeterWidth>':
 				self.perimeterWidth = float(splitLine[1])
 				self.skirtOutset = (self.repository.gapOverPerimeterWidth.value + 0.5) * self.perimeterWidth
@@ -297,8 +294,8 @@ class SkirtSkein:
 			self.oldTemperatureInput = gcodec.getDoubleAfterFirstLetter(splitLine[1])
 			self.skirtTemperature = self.oldTemperatureInput
 		elif firstWord == 'M108':
-			self.oldFlowRateInput = gcodec.getDoubleAfterFirstLetter(splitLine[1])
-			self.skirtFlowRate = self.oldFlowRateInput
+			self.oldFlowRate = gcodec.getDoubleAfterFirstLetter(splitLine[1])
+			self.skirtFlowRate = self.oldFlowRate
 		elif firstWord == '(<supportLayer>)':
 			self.isSupportLayer = True
 		elif firstWord == '(</supportLayer>)':

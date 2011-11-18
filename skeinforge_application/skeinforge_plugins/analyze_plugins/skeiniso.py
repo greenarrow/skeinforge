@@ -6,7 +6,7 @@ The skeiniso manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skeiniso
 
 ==Operation==
-The default 'Activate Skeiniso' checkbox is on.  When it is on, the functions described below will work when called from the skeinforge toolchain, when it is off, the functions will not be called from the toolchain.  The functions will still be called, whether or not the 'Activate Skeiniso' checkbox is on, when skeiniso is run directly.
+The default 'Activate Skeiniso' checkbox is off.  When it is on, the functions described below will work when called from the skeinforge toolchain, when it is off, the functions will not be called from the toolchain.  The functions will still be called, whether or not the 'Activate Skeiniso' checkbox is on, when skeiniso is run directly.
 
 Skeiniso requires skeinforge comments in the gcode file to distinguish the loops and perimeters.  If the comments are deleted, all threads will be displayed as generic threads.  To get the penultimate file of the tool chain, just before export deletes the comments, select 'Save Penultimate Gcode' in export, and open the gcode file with the suffix '_penultimate.gcode' with skeiniso.
 
@@ -91,7 +91,7 @@ Default is 'Display Line'.
 The mouse tool can be changed from the 'Mouse Mode' menu button or picture button.  The mouse tools listen to the arrow keys when the canvas has the focus.  Clicking in the canvas gives the canvas the focus, and when the canvas has the focus a thick black border is drawn around the canvas.
 
 ====Display Line====
-The 'Display Line' tool will display the highlight the selected line, and display the file line count, counting from one, and the gcode line itself.  When the 'Display Line' tool is active, clicking the canvas will select the nearest line to the mouse click.
+The 'Display Line' tool will display the highlight the selected line, and display the file line count, counting from one, and the gcode line itself.  When the 'Display Line' tool is active, clicking the canvas will select the closest line to the mouse click.
 
 ====Viewpoint Move====
 The 'Viewpoint Move' tool will move the viewpoint in the xy plane when the mouse is clicked and dragged on the canvas.
@@ -302,7 +302,7 @@ class SkeinisoRepository( tableau.TableauRepository ):
 		self.baseNameSynonym = 'behold.csv'
 		self.fileNameInput = settings.FileNameInput().getFromFileName( [ ('Gcode text files', '*.gcode') ], 'Open File for Skeiniso', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skeiniso')
-		self.activateSkeiniso = settings.BooleanSetting().getFromValue('Activate Skeiniso', self, True )
+		self.activateSkeiniso = settings.BooleanSetting().getFromValue('Activate Skeiniso', self, False)
 		self.addAnimation()
 		self.axisRulings = settings.BooleanSetting().getFromValue('Axis Rulings', self, True )
 		settings.LabelSeparator().getFromRepository(self)

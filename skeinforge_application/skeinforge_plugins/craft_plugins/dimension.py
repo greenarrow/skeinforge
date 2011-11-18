@@ -1,16 +1,20 @@
 #! /usr/bin/env python
 """
 This page is in the table of contents.
-Dimension adds Adrian's extruder distance E value to the gcode movement lines, as described at:
+Dimension adds Adrian's extruder distance E value so firmware does not have to calculate it on it's own and can set the extruder speed in relation to the distance that needs to be extruded.  Some printers don't support this.  Extruder distance is described at:
+
 http://blog.reprap.org/2009/05/4d-printing.html
 
 and in Erik de Bruijn's conversion script page at:
+
 http://objects.reprap.org/wiki/3D-to-5D-Gcode.php
 
 The dimension manual page is at:
+
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Dimension
 
 Nophead wrote an excellent article on how to set the filament parameters:
+
 http://hydraraptor.blogspot.com/2011/03/spot-on-flow-rate.html
 
 ==Operation==
@@ -18,7 +22,7 @@ The default 'Activate Dimension' checkbox is off.  When it is on, the functions 
 
 ==Settings==
 ===Extrusion Distance Format Choice===
-Default is 'Absolute Extrusion Distance' because in Adrian's description the distance is absolute.  In future, because the relative distances are smaller than the cumulative absolute distances, hopefully the firmaware will be able to use relative distance.
+Default is 'Absolute Extrusion Distance' because in Adrian's description the distance is absolute.  In future, because the relative distances are smaller than the cumulative absolute distances, hopefully the firmware will be able to use relative distance.
 
 ====Absolute Extrusion Distance====
 When selected, the extrusion distance output will be the total extrusion distance to that gcode line.
@@ -29,7 +33,9 @@ When selected, the extrusion distance output will be the extrusion distance from
 ===Extruder Retraction Speed===
 Default is 13.3 mm/s.
 
-Defines the extruder retraction feed rate.
+Defines the extruder retraction feed rate.  A high value will allow the retraction operation to complete before much material oozes out.  If your extruder can handle it, this value should be much larger than your feed rate.
+
+As an example, I have a feed rate of 48 mm/s and a 'Extruder Retraction Speed' of 150 mm/s.
 
 ===Filament===
 ====Filament Diameter====
@@ -46,6 +52,16 @@ The default value is so low for ABS because ABS is relatively soft and with a pi
 
 Overall, you'll have to find the optimal filament packing density by experiment.
 
+===Maximum E Value before Reset===
+Default: 91234.0
+
+Defines the maximum E value before it is reset with the 'G92 E0' command line.  The reason it is reset only after the maximum E value is reached is because at least one firmware takes time to reset.  The problem with waiting until the E value is high before resetting is that more characters are sent.  So if your firmware takes a lot of time to reset, set this parameter to a high value, if it doesn't set this parameter to a low value or even zero.
+
+===Minimum Travel for Retraction===
+Default: 1.0 millimeter
+
+Defines the minimum distance that the extruder head has to travel from the end of one thread to the beginning of another, in order to trigger the extruder retraction.  Setting this to a high value means the extruder will retract only occasionally, setting it to a low value means the extruder will retract most of the time.
+
 ===Retract Within Island===
 Default is off.
 
@@ -54,12 +70,14 @@ When selected, retraction will work even when the next thread is within the same
 ===Retraction Distance===
 Default is zero.
 
-Defines the retraction distance when the thread ends.
+Defines the amount the extruder retracts (sucks back) the extruded filament whenever an extruder stop is commanded.  Using this seems to help prevent stringing.  e.g. If set to 10 the extruder reverses the distance required to pull back 10mm of filament.  In fact this does not actually happen but if you set this distance by trial and error you can get to a point where there is very little ooze from the extruder when it stops which is not normally the case. 
 
 ===Restart Extra Distance===
 Default is zero.
 
 Defines the restart extra distance when the thread restarts.  The restart distance will be the retraction distance plus the restart extra distance.
+
+If this is greater than zero when the extruder starts this distance is added to the retract value giving extra filament.  It can be a negative value in which case it is subtracted from the retraction distance.  On some Repstrap machines a negative value can stop the build up of plastic that can occur at the start of perimeters.
 
 ==Examples==
 The following examples dimension the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and dimension.py.
@@ -141,6 +159,7 @@ class DimensionRepository:
 		self.filamentDiameter = settings.FloatSpin().getFromValue(1.0, 'Filament Diameter (mm):', self, 6.0, 2.8)
 		self.filamentPackingDensity = settings.FloatSpin().getFromValue(0.7, 'Filament Packing Density (ratio):', self, 1.0, 0.85)
 		settings.LabelSeparator().getFromRepository(self)
+		self.maximumEValueBeforeReset = settings.FloatSpin().getFromValue(0.0, 'Maximum E Value before Reset (float):', self, 999999.9, 91234.0)
 		self.minimumTravelForRetraction = settings.FloatSpin().getFromValue(0.0, 'Minimum Travel for Retraction (millimeters):', self, 2.0, 1.0)
 		self.retractWithinIsland = settings.BooleanSetting().getFromValue('Retract Within Island', self, False)
 		self.retractionDistance = settings.FloatSpin().getFromValue( 0.0, 'Retraction Distance (millimeters):', self, 100.0, 0.0 )
@@ -241,7 +260,6 @@ class DimensionSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == 'G1':
 				if isActive:
-					location = gcodec.getLocationFromSplitLine(location, splitLine)
 					if not self.repository.retractWithinIsland.value:
 						locationEnclosureIndex = self.getSmallestEnclosureIndex(location.dropAxis())
 						if locationEnclosureIndex != self.getSmallestEnclosureIndex(self.oldLocation.dropAxis()):
@@ -250,6 +268,7 @@ class DimensionSkein:
 					xyTravel = abs(locationMinusOld.dropAxis())
 					zTravelMultiplied = locationMinusOld.z * self.zDistanceRatio
 					return math.sqrt(xyTravel * xyTravel + zTravelMultiplied * zTravelMultiplied)
+				location = gcodec.getLocationFromSplitLine(location, splitLine)
 			elif firstWord == 'M101':
 				isActive = True
 			elif firstWord == 'M103':
@@ -364,7 +383,7 @@ class DimensionSkein:
 			self.layerIndex += 1
 		elif firstWord == 'M101':
 			self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
-			if self.totalExtrusionDistance > 999999.0: 
+			if self.totalExtrusionDistance > self.repository.maximumEValueBeforeReset.value: 
 				if not self.repository.relativeExtrusionDistance.value:
 					self.distanceFeedRate.addLine('G92 E0')
 					self.totalExtrusionDistance = 0.0

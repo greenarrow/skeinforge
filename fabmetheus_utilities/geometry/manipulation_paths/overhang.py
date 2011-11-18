@@ -305,12 +305,12 @@ class OverhangWiddershinsLeft:
 		return euclidean.getAroundLoop( self.alongAway.pointIndex, endIndex, self.alongAway.loop )
 
 	def getDistance(self):
-		"Get distance between point and nearest intersection or bottom point along line."
+		"Get distance between point and closest intersection or bottom point along line."
 		self.pointMinusBottomY = self.alongAway.point.y - self.alongAway.minimumY
 		self.diagonalDistance = self.pointMinusBottomY * self.diagonalRatio
 		if self.alongAway.pointIndex == None:
 			return self.getDistanceToBottom()
-		rotatedLoop = euclidean.getPointsRoundZAxis( self.intersectionYMirror,  euclidean.getComplexPath( self.alongAway.loop ) )
+		rotatedLoop = euclidean.getRotatedComplexes( self.intersectionYMirror,  euclidean.getComplexPath( self.alongAway.loop ) )
 		rotatedPointComplex = rotatedLoop[ self.alongAway.pointIndex ]
 		beginX = rotatedPointComplex.real
 		endX = beginX + self.diagonalDistance + self.diagonalDistance
@@ -334,7 +334,7 @@ class OverhangWiddershinsLeft:
 		return self.getDistanceToBottom()
 
 	def getDistanceToBottom(self):
-		"Get distance between point and nearest bottom point along line."
+		"Get distance between point and closest bottom point along line."
 		self.bottomX = self.alongAway.point.x + self.pointMinusBottomY * self.xRatio
 		self.closestBottomPoint = None
 		closestDistanceX = 987654321.0

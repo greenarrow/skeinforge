@@ -1,6 +1,6 @@
 """
 This page is in the table of contents.
-Comb is a script to comb the extrusion hair of a gcode file.
+Comb is a craft tool to comb the extrusion hair of a gcode file.
 
 The comb manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Comb
@@ -98,20 +98,20 @@ def getNewRepository():
 	return CombRepository()
 
 def getPathsByIntersectedLoop( begin, end, loop ):
-	"Get both paths along the loop from the point nearest to the begin to the point nearest to the end."
-	nearestBeginDistanceIndex = euclidean.getNearestDistanceIndex( begin, loop )
-	nearestEndDistanceIndex = euclidean.getNearestDistanceIndex( end, loop )
-	beginIndex = ( nearestBeginDistanceIndex.index + 1 ) % len(loop)
-	endIndex = ( nearestEndDistanceIndex.index + 1 ) % len(loop)
-	nearestBegin = euclidean.getNearestPointOnSegment( loop[ nearestBeginDistanceIndex.index ], loop[ beginIndex ], begin )
-	nearestEnd = euclidean.getNearestPointOnSegment( loop[ nearestEndDistanceIndex.index ], loop[ endIndex ], end )
-	clockwisePath = [ nearestBegin ]
-	widdershinsPath = [ nearestBegin ]
-	if nearestBeginDistanceIndex.index != nearestEndDistanceIndex.index:
+	"Get both paths along the loop from the point closest to the begin to the point closest to the end."
+	closestBeginDistanceIndex = euclidean.getClosestDistanceIndexToLine( begin, loop )
+	closestEndDistanceIndex = euclidean.getClosestDistanceIndexToLine( end, loop )
+	beginIndex = ( closestBeginDistanceIndex.index + 1 ) % len(loop)
+	endIndex = ( closestEndDistanceIndex.index + 1 ) % len(loop)
+	closestBegin = euclidean.getClosestPointOnSegment( loop[ closestBeginDistanceIndex.index ], loop[ beginIndex ], begin )
+	closestEnd = euclidean.getClosestPointOnSegment( loop[ closestEndDistanceIndex.index ], loop[ endIndex ], end )
+	clockwisePath = [ closestBegin ]
+	widdershinsPath = [ closestBegin ]
+	if closestBeginDistanceIndex.index != closestEndDistanceIndex.index:
 		widdershinsPath += euclidean.getAroundLoop( beginIndex, endIndex, loop )
 		clockwisePath += euclidean.getAroundLoop( endIndex, beginIndex, loop )[: : -1]
-	clockwisePath.append( nearestEnd )
-	widdershinsPath.append( nearestEnd )
+	clockwisePath.append( closestEnd )
+	widdershinsPath.append( closestEnd )
 	return [ clockwisePath, widdershinsPath ]
 
 def writeOutput(fileName, shouldAnalyze=True):
@@ -140,7 +140,6 @@ class CombSkein:
 	"A class to comb a skein of extrusions."
 	def __init__(self):
 		'Initialize'
-		self.isAlteration = False
 		self.betweenTable = {}
 		self.boundaryLoop = None
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
@@ -165,7 +164,7 @@ class CombSkein:
 	def addIfTravel( self, splitLine ):
 		"Add travel move around loops if the extruder is off."
 		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
-		if not self.isAlteration and not self.extruderActive and self.oldLocation != None:
+		if not self.extruderActive and self.oldLocation != None:
 			if len( self.getBoundaries() ) > 0:
 				highestZ = max( location.z, self.oldLocation.z )
 				self.addGcodePathZ( self.travelFeedRateMinute, self.getPathsBetween( self.oldLocation.dropAxis(), location.dropAxis() ), highestZ )
@@ -221,9 +220,9 @@ class CombSkein:
 			return True
 		return not euclidean.isLineIntersectingLoops( self.getBetweens(), begin, end )
 
-	def getIsRunningJumpPathAdded( self, betweens, end, lastPoint, nearestEndMinusLastSegment, pathAround, penultimatePoint, runningJumpSpace ):
+	def getIsRunningJumpPathAdded( self, betweens, end, lastPoint, closestEndMinusLastSegment, pathAround, penultimatePoint, runningJumpSpace ):
 		"Add a running jump path if possible, and return if it was added."
-		jumpStartPoint = lastPoint - nearestEndMinusLastSegment * runningJumpSpace
+		jumpStartPoint = lastPoint - closestEndMinusLastSegment * runningJumpSpace
 		if euclidean.isLineIntersectingLoops( betweens, penultimatePoint, jumpStartPoint ):
 			return False
 		pathAround[-1] = jumpStartPoint
@@ -285,7 +284,7 @@ class CombSkein:
 		boundaries = self.getBoundaries()
 		for boundaryIndex in xrange(len(boundaries)):
 			boundary = boundaries[ boundaryIndex ]
-			boundaryRotated = euclidean.getPointsRoundZAxis(segmentYMirror, boundary)
+			boundaryRotated = euclidean.getRotatedComplexes(segmentYMirror, boundary)
 			euclidean.addXIntersectionIndexesFromLoopY(boundaryRotated, boundaryIndex, switchX, y)
 		switchX.sort()
 		maximumX = max(beginRotated.real, endRotated.real)
@@ -390,6 +389,8 @@ class CombSkein:
 		if len(splitLine) < 1:
 			return
 		firstWord = splitLine[0]
+		if self.distanceFeedRate.getIsAlteration(line):
+			return
 		if firstWord == 'G1':
 			self.addIfTravel(splitLine)
 			self.layerZ = self.nextLayerZ
@@ -397,16 +398,12 @@ class CombSkein:
 			self.extruderActive = True
 		elif firstWord == 'M103':
 			self.extruderActive = False
-		elif firstWord == '(<alteration>)':
-			self.isAlteration = True
-		elif firstWord == '(</alteration>)':
-			self.isAlteration = False
 		elif firstWord == '(<layer>':
 			self.layerCount.printProgressIncrement('comb')
 			self.nextLayerZ = float(splitLine[1])
 			if self.layerZ == None:
 				self.layerZ = self.nextLayerZ
-		self.distanceFeedRate.addLine(line)
+		self.distanceFeedRate.addLineCheckAlteration(line)
 
 
 def main():

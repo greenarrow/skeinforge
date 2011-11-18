@@ -1,6 +1,6 @@
 """
 This page is in the table of contents.
-Export is a script to pick an export plugin and optionally print the output to a file.
+Export is a craft tool to pick an export plugin, add information to the file name, and delete comments.
 
 The export manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Export
@@ -47,17 +47,22 @@ Default is empty.
 
 Defines the output name for sending to a file or pipe.  A common choice is stdout to print the output in the shell screen.  Another common choice is stderr.  With the empty default, nothing will be done.  If the value is anything else, the output will be written to that file name.
 
+===Analyze Gcode===
+Default is on.
+
+When selected, the penultimate gcode will be sent to the analyze plugins to be analyzed and viewed.
+
 ===Comment Choice===
 Default is 'Delete All Comments'.
 
 ====Do Not Delete Comments====
-When selected, export will not delete comments.  Crafting comments slow down the processing in many firmware types, which leads to segment pauses.
-
+When selected, export will not delete comments.  Crafting comments slow down the processing in many firmware types, which leads to pauses and therefore a lower quality print.
+ 
 ====Delete Crafting Comments====
-When selected, export will delete the time consuming crafting comments, but leave the initialization comments.  Since the crafting comments are deleted, there are no additional segment pauses.  The remaining initialization comments provide some useful information for the analyze tools.
+When selected, export will delete the time consuming crafting comments, but leave the initialization comments.  Since the crafting comments are deleted, there are no pauses during extrusion.  The remaining initialization comments provide some useful information for the analyze tools.
 
 ====Delete All Comments====
-When selected, export will delete all comments.  The comments are not necessary to run a fabricator.
+When selected, export will delete all comments.  The comments are not necessary to run a fabricator.  Some printers do not support comments at all so the safest way is choose this option.
 
 ===Export Operations===
 Export presents the user with a choice of the export plugins in the export_plugins folder.  The chosen plugin will then modify the gcode or translate it into another format.  There is also the "Do Not Change Output" choice, which will not change the output.  An export plugin is a script in the export_plugins folder which has the getOutput function, the globalIsReplaceable variable and if it's output is not replaceable, the writeOutput function.
@@ -65,8 +70,8 @@ Export presents the user with a choice of the export plugins in the export_plugi
 ===File Extension===
 Default is gcode.
 
-Defines the file extension added to the name of the output file.
-
+Defines the file extension added to the name of the output file.  The output file will be named as originalname_export.extension so if you are processing XYZ.stl the output will by default be XYZ_export.gcode
+ 
 ===Name of Replace File===
 Default is replace.csv.
 
@@ -207,7 +212,7 @@ def getNewRepository():
 
 def getReplaceableExportGcode(nameOfReplaceFile, replaceableExportGcode):
 	'Get text with strings replaced according to replace.csv file.'
-	replaceLines = settings.getLinesInAlterationsOrGivenDirectory(nameOfReplaceFile)
+	replaceLines = settings.getAlterationLines(nameOfReplaceFile)
 	if len(replaceLines) < 1:
 		return replaceableExportGcode
 	for replaceLine in replaceLines:
@@ -267,6 +272,10 @@ def writeOutput(fileName, shouldAnalyze=True):
 	if repository.addExportSuffix.value:
 		fileNameSuffix += '_export'
 	gcodeText = gcodec.getGcodeFileText(fileName, '')
+	procedures = skeinforge_craft.getProcedures('export', gcodeText)
+	gcodeText = skeinforge_craft.getChainTextFromProcedures(fileName, procedures[: -1], gcodeText)
+	if gcodeText == '':
+		return None
 	if repository.addProfileExtension.value:
 		fileNameSuffix += '.' + getFirstValue(gcodeText, '(<profileName>')
 	if repository.addDescriptiveExtension.value:
@@ -274,10 +283,6 @@ def writeOutput(fileName, shouldAnalyze=True):
 	if repository.addTimestampExtension.value:
 		fileNameSuffix += '.' + getFirstValue(gcodeText, '(<timeStampPreface>')
 	fileNameSuffix += '.' + repository.fileExtension.value
-	procedures = skeinforge_craft.getProcedures('export', gcodeText)
-	gcodeText = skeinforge_craft.getChainTextFromProcedures(fileName, procedures[: -1], gcodeText)
-	if gcodeText == '':
-		return None
 	fileNamePenultimate = fileName[: fileName.rfind('.')] + '_penultimate.gcode'
 	filePenultimateWritten = False
 	if repository.savePenultimateGcode.value:
@@ -286,9 +291,8 @@ def writeOutput(fileName, shouldAnalyze=True):
 		print('The penultimate file is saved as ' + archive.getSummarizedFileName(fileNamePenultimate))
 	exportGcode = getCraftedTextFromText(gcodeText, repository)
 	window = None
-	if shouldAnalyze:
-		window = skeinforge_analyze.writeOutput(fileName, fileNamePenultimate, fileNameSuffix,
-			filePenultimateWritten, gcodeText)
+	if shouldAnalyze and repository.analyzeGcode.value:
+		window = skeinforge_analyze.writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWritten, gcodeText)
 	replaceableExportGcode = None
 	selectedPluginModule = getSelectedPluginModule(repository.exportPlugins)
 	if selectedPluginModule == None:
@@ -323,11 +327,12 @@ class ExportRepository:
 		self.addProfileExtension = settings.BooleanSetting().getFromValue('Add Profile Extension', self, False)
 		self.addTimestampExtension = settings.BooleanSetting().getFromValue('Add Timestamp Extension', self, False)
 		self.alsoSendOutputTo = settings.StringSetting().getFromValue('Also Send Output To:', self, '')
+		self.analyzeGcode = settings.BooleanSetting().getFromValue('Analyze Gcode', self, True)
 		self.commentChoice = settings.MenuButtonDisplay().getFromName('Comment Choice:', self)
 		self.doNotDeleteComments = settings.MenuRadio().getFromMenuButtonDisplay(self.commentChoice, 'Do Not Delete Comments', self, False)
 		self.deleteCraftingComments = settings.MenuRadio().getFromMenuButtonDisplay(self.commentChoice, 'Delete Crafting Comments', self, False)
 		self.deleteAllComments = settings.MenuRadio().getFromMenuButtonDisplay(self.commentChoice, 'Delete All Comments', self, True)
-		exportPluginsFolderPath = archive.getAbsoluteFrozenFolderPath(__file__, 'export_plugins')
+		exportPluginsFolderPath = archive.getAbsoluteFrozenFolderPath(archive.getCraftPluginsDirectoryPath('export.py'), 'export_plugins')
 		exportStaticDirectoryPath = os.path.join(exportPluginsFolderPath, 'static_plugins')
 		exportPluginFileNames = archive.getPluginFileNamesFromDirectoryPath(exportPluginsFolderPath)
 		exportStaticPluginFileNames = archive.getPluginFileNamesFromDirectoryPath(exportStaticDirectoryPath)

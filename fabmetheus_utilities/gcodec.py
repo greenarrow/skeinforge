@@ -124,6 +124,54 @@ def getGcodeFileText(fileName, gcodeText):
 		return archive.getFileText(fileName)
 	return ''
 
+def getGcodeWithoutDuplication(duplicateWord, gcodeText):
+	'Get gcode text without duplicate first words.'
+	lines = archive.getTextLines(gcodeText)
+	oldWrittenLine = None
+	output = cStringIO.StringIO()
+	for line in lines:
+		firstWord = getFirstWordFromLine(line)
+		if firstWord == duplicateWord:
+			if line != oldWrittenLine:
+				output.write(line + '\n')
+				oldWrittenLine = line
+		else:
+			if len(line) > 0:
+				output.write(line + '\n')
+	return output.getvalue() ###
+	return gcodeText
+	isExtruderActive = False
+	lines = archive.getTextLines(gcodeText)
+	oldDuplicationIndex = None
+	oldWrittenLine = None
+	output = cStringIO.StringIO()
+	for lineIndex, line in enumerate(lines):
+		firstWord = getFirstWordFromLine(line)
+		if firstWord == duplicateWord:
+			if oldDuplicationIndex == None:
+				oldDuplicationIndex = lineIndex
+			else:
+				lines[oldDuplicationIndex] = line
+				lines[lineIndex] = ''
+		elif firstWord.startswith('G'):
+			if isExtruderActive:
+				oldDuplicationIndex = None
+		elif firstWord == 'M101':
+			isExtruderActive = True
+			oldDuplicationIndex = None
+		elif firstWord == 'M103':
+			isExtruderActive = False
+	for line in lines:
+		firstWord = getFirstWordFromLine(line)
+		if firstWord == duplicateWord:
+			if line != oldWrittenLine:
+				output.write(line + '\n')
+				oldWrittenLine = line
+		else:
+			if len(line) > 0:
+				output.write(line + '\n')
+	return output.getvalue()
+
 def getIndexOfStartingWithSecond(letter, splitLine):
 	'Get index of the first occurence of the given letter in the split line, starting with the second word.  Return - 1 if letter is not found'
 	for wordIndex in xrange( 1, len(splitLine) ):
@@ -157,7 +205,8 @@ def getRotationBySplitLine(splitLine):
 
 def getSplitLineBeforeBracketSemicolon(line):
 	'Get the split line before a bracket or semicolon.'
-	line = line.split(';')[0]
+	if ';' in line:
+		line = line[: line.find(';')]
 	bracketIndex = line.find('(')
 	if bracketIndex > 0:
 		return line[: bracketIndex].split()
@@ -177,13 +226,6 @@ def getTagBracketedLine(tagName, value):
 def getTagBracketedProcedure(procedure):
 	'Get line with a begin procedure tag, procedure and end procedure tag.'
 	return getTagBracketedLine('procedureName', procedure)
-
-def getWithoutBracketsEqualTab(line):
-	'Get a string without the greater than sign, the bracket and less than sign, the equal sign or the tab.'
-	line = line.replace('=', ' ')
-	line = line.replace('(<', '')
-	line = line.replace('>', '')
-	return line.replace('\t', '')
 
 def isProcedureDone(gcodeText, procedure):
 	'Determine if the procedure has been done on the gcode text.'
@@ -246,6 +288,7 @@ class DistanceFeedRate:
 	'A class to limit the z feed rate and round values.'
 	def __init__(self):
 		'Initialize.'
+		self.isAlteration = False
 		self.decimalPlacesCarried = 3
 		self.output = cStringIO.StringIO()
 
@@ -299,6 +342,16 @@ class DistanceFeedRate:
 		if len(line) > 0:
 			self.output.write(line + '\n')
 
+	def addLineCheckAlteration(self, line):
+		'Add a line of text and a newline to the output and check to see if it is an alteration line.'
+		firstWord = getFirstWord(getSplitLineBeforeBracketSemicolon(line))
+		if firstWord == '(<alteration>)':
+			self.isAlteration = True
+		elif firstWord == '(</alteration>)':
+			self.isAlteration = False
+		if len(line) > 0:
+			self.output.write(line + '\n')
+
 	def addLines(self, lines):
 		'Add lines of text to the output.'
 		addLinesToCString(self.output, lines)
@@ -318,7 +371,7 @@ class DistanceFeedRate:
 				absoluteDistanceMode = True
 			elif firstWord == 'G91':
 				absoluteDistanceMode = False
-			self.addLine(line)
+			self.addLine('(<alterationDeleteThisPrefix/>)' + line)
 		if not absoluteDistanceMode:
 			self.addLine('G90')
 		self.addLine('(</alteration>)')
@@ -361,6 +414,13 @@ class DistanceFeedRate:
 	def getInfillBoundaryLine(self, location):
 		'Get infill boundary gcode line.'
 		return '(<infillPoint> X%s Y%s Z%s </infillPoint>)' % (self.getRounded(location.x), self.getRounded(location.y), self.getRounded(location.z))
+
+	def getIsAlteration(self, line):
+		'Determine if it is an alteration.'
+		if self.isAlteration:
+			self.addLineCheckAlteration(line)
+			return True
+		return False
 
 	def getLinearGcodeMovement(self, point, z):
 		'Get a linear gcode movement.'

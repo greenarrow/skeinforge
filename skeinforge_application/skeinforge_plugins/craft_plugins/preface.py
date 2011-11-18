@@ -57,7 +57,7 @@ from __future__ import absolute_import
 #Init has to be imported first because it has code to workaround the python bug where relative imports don't work if the module is imported as a main module.
 import __init__
 
-from datetime import date
+from datetime import date, datetime
 from fabmetheus_utilities.fabmetheus_tools import fabmetheus_interpret
 from fabmetheus_utilities.svg_reader import SVGReader
 from fabmetheus_utilities import archive
@@ -135,13 +135,17 @@ class PrefaceSkein:
 
 	def addInitializationToOutput(self):
 		"Add initialization gcode to the output."
-		self.distanceFeedRate.addTagBracketedLine('creation', 'skeinforge') # GCode formatted comment
-		absoluteFilePathUntilDot = os.path.abspath(__file__)[: os.path.abspath(__file__).rfind('.')]
+		self.distanceFeedRate.addTagBracketedLine('format', 'skeinforge gcode')
+		absoluteFilePathUntilDot = archive.getUntilDot(archive.getCraftPluginsDirectoryPath('preface.py'))
+		dateTodayString = date.today().isoformat().replace('-', '.')[2 :]
 		if absoluteFilePathUntilDot == '/home/enrique/Desktop/backup/babbleold/script/reprap/fabmetheus/skeinforge_application/skeinforge_plugins/craft_plugins/preface': #is this script on Enrique's computer?
-			archive.writeFileText(archive.getVersionFileName(), date.today().isoformat().replace('-', '.')[2 :])
+			archive.writeFileText(archive.getVersionFileName(), dateTodayString)
 		versionText = archive.getFileText(archive.getVersionFileName())
-		self.distanceFeedRate.addTagBracketedLine('version', versionText) # GCode formatted comment
-		self.distanceFeedRate.addLine('(<extruderInitialization>)') # GCode formatted comment
+		self.distanceFeedRate.addTagBracketedLine('version', versionText)
+		dateTimeTuple = datetime.now().timetuple()
+		created = dateTodayString + '|%s:%s' % (dateTimeTuple[3], dateTimeTuple[4])
+		self.distanceFeedRate.addTagBracketedLine('created', created)
+		self.distanceFeedRate.addLine('(<extruderInitialization>)')
 		if self.repository.setPositioningToAbsolute.value:
 			self.distanceFeedRate.addLine('G90 ;set positioning to absolute') # Set positioning to absolute.
 		if self.repository.setUnitsToMillimeters.value:
@@ -173,13 +177,11 @@ class PrefaceSkein:
 		self.distanceFeedRate.addLine('(</extruderInitialization>)') # Initialization is finished, extrusion is starting.
 		self.distanceFeedRate.addLine('(<crafting>)') # Initialization is finished, crafting is starting.
 
-	def addPreface( self, rotatedLoopLayer ):
+	def addPreface( self, loopLayer ):
 		"Add preface to the carve layer."
-		self.distanceFeedRate.addLine('(<layer> %s )' % rotatedLoopLayer.z ) # Indicate that a new layer is starting.
-		if rotatedLoopLayer.rotation != None:
-			self.distanceFeedRate.addTagBracketedLine('bridgeRotation', str( rotatedLoopLayer.rotation ) ) # Indicate the bridge rotation.
-		for loop in rotatedLoopLayer.loops:
-			self.distanceFeedRate.addGcodeFromLoop(loop, rotatedLoopLayer.z)
+		self.distanceFeedRate.addLine('(<layer> %s )' % loopLayer.z ) # Indicate that a new layer is starting.
+		for loop in loopLayer.loops:
+			self.distanceFeedRate.addGcodeFromLoop(loop, loopLayer.z)
 		self.distanceFeedRate.addLine('(</layer>)')
 
 	def addShutdownToOutput(self):
@@ -188,18 +190,15 @@ class PrefaceSkein:
 		if self.repository.turnExtruderOffAtShutDown.value:
 			self.distanceFeedRate.addLine('M103') # Turn extruder motor off.
 
-	def addToolSettingLines(self, toolName):
+	def addToolSettingLines(self, pluginName):
 		"Add tool setting lines."
-		craftModule = skeinforge_craft.getCraftModule(toolName)
-		preferences = settings.getReadRepository(craftModule.getNewRepository()).preferences
-		for preference in preferences:
-			if preference.name.startswith('Activate %s' % toolName.capitalize()):
-				if preference.value == False:
-					return
+		preferences = skeinforge_craft.getCraftPreferences(pluginName)
+		if skeinforge_craft.getCraftValue('Activate %s' % pluginName.capitalize(), preferences) != True:
+			return
 		for preference in preferences:
 			valueWithoutReturn = str(preference.value).replace('\n', ' ').replace('\r', ' ')
 			if preference.name != 'WindowPosition' and not preference.name.startswith('Open File'):
-				line = '%s %s %s' % (toolName, preference.name.replace(' ', '_'), valueWithoutReturn)
+				line = '%s %s %s' % (pluginName, preference.name.replace(' ', '_'), valueWithoutReturn)
 				self.distanceFeedRate.addTagBracketedLine('setting', line)
 
 	def getCraftedGcode( self, repository, gcodeText ):
@@ -211,9 +210,9 @@ class PrefaceSkein:
 			return ''
 		self.distanceFeedRate.decimalPlacesCarried = int(self.svgReader.sliceDictionary['decimalPlacesCarried'])
 		self.addInitializationToOutput()
-		for rotatedLoopLayerIndex, rotatedLoopLayer in enumerate(self.svgReader.rotatedLoopLayers):
-			settings.printProgressByNumber(rotatedLoopLayerIndex, len(self.svgReader.rotatedLoopLayers), 'preface')
-			self.addPreface( rotatedLoopLayer )
+		for loopLayerIndex, loopLayer in enumerate(self.svgReader.loopLayers):
+			settings.printProgressByNumber(loopLayerIndex, len(self.svgReader.loopLayers), 'preface')
+			self.addPreface( loopLayer )
 		self.addShutdownToOutput()
 		return self.distanceFeedRate.output.getvalue()
 

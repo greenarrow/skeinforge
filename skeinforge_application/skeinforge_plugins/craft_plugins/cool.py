@@ -1,8 +1,10 @@
 """
 This page is in the table of contents.
-Cool is a script to cool the shape.
+Cool is a craft tool to cool the shape.
 
 Cool works well with a stepper extruder, it does not work well with a DC motor extruder.
+
+If enabled, before each layer that takes less then "Minimum Layer Time" to print the tool head will orbit around the printed area for 'Minimum Layer Time' minus 'the time it takes to print the layer' before it starts printing the layer. This is great way to let layers with smaller area cool before you start printing on top of them (so you do not overheat the area). 
 
 The cool manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Cool
@@ -41,7 +43,7 @@ Defines the minimum amount of time the extruder will spend on a layer, this is a
 ===Minimum Orbital Radius===
 Default is 10 millimeters.
 
-When the orbit cool type is selected, if the area of the largest island is as large as the square of the "Minimum Orbital Radius" then the orbits will be just within the island.  If the island is smaller, then the orbits will be in a square of the "Minimum Orbital Radius" around the center of the island.
+When the orbit cool type is selected, if the area of the largest island is as large as the square of the "Minimum Orbital Radius" then the orbits will be just within the island.  If the island is smaller, then the orbits will be in a square of the "Minimum Orbital Radius" around the center of the island.  This is so that the hot extruder does not stay too close to small islands.
 
 ===Name of Alteration Files===
 Cool looks for alteration files in the alterations folder in the .skeinforge folder in the home directory.  Cool does not care if the text file names are capitalized, but some file systems do not handle file name cases properly, so to be on the safe side you should give them lower case names.  If it doesn't find the file it then looks in the alterations folder in the skeinforge_plugins folder.  The cool start and end text idea is from:
@@ -50,13 +52,12 @@ http://makerhahn.blogspot.com/2008/10/yay-minimug.html
 ====Name of Cool End File====
 Default is cool_end.gcode.
 
-If there is a file with the name of the "Name of Cool End File" setting, it will be added to the start of the orbits.
+If there is a file with the name of the "Name of Cool End File" setting, it will be added to the end of the orbits.
 
 ====Name of Cool Start File====
 Default is cool_start.gcode.
 
-If there is a file with the name of the "Name of Cool Start File" setting, it will be added to the end of the orbits.
-		self.orbitalOutset = settings.FloatSpin().getFromValue(1.0, 'Orbital Outset (millimeters):', self, 5.0, 2.0)
+If there is a file with the name of the "Name of Cool Start File" setting, it will be added to the start of the orbits.
 
 ===Orbital Outset===
 Default is 2 millimeters.
@@ -66,12 +67,12 @@ When the orbit cool type is selected, the orbits will be outset around the large
 ===Turn Fan On at Beginning===
 Default is on.
 
-When selected, cool will turn the fan on at the beginning of the fabrication.
+When selected, cool will turn the fan on at the beginning of the fabrication by adding the M106 command.
 
-===Turn Fan On at Ending===
+===Turn Fan Off at Ending===
 Default is on.
 
-When selected, cool will turn the fan off at the ending of the fabrication.
+When selected, cool will turn the fan off at the ending of the fabrication by adding the M107 command.
 
 ==Examples==
 The following examples cool the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and cool.py.
@@ -194,7 +195,7 @@ class CoolSkein:
 			return
 		insetBoundaryLoops = self.boundaryLayer.loops
 		if abs(self.repository.orbitalOutset.value) > 0.1 * abs(self.perimeterWidth):
-			insetBoundaryLoops = intercircle.getInsetLoopsFromLoops(-self.repository.orbitalOutset.value, self.boundaryLayer.loops)
+			insetBoundaryLoops = intercircle.getInsetLoopsFromLoops(self.boundaryLayer.loops, -self.repository.orbitalOutset.value)
 		if len(insetBoundaryLoops) < 1:
 			insetBoundaryLoops = self.boundaryLayer.loops
 		largestLoop = euclidean.getLargestLoop(insetBoundaryLoops)
@@ -211,7 +212,7 @@ class CoolSkein:
 			largestLoop = euclidean.getSquareLoopWiddershins(minimumCorner, maximumCorner)
 		pointComplex = euclidean.getXYComplexFromVector3(self.oldLocation)
 		if pointComplex != None:
-			largestLoop = euclidean.getLoopStartingNearest(self.perimeterWidth, pointComplex, largestLoop)
+			largestLoop = euclidean.getLoopStartingClosest(self.perimeterWidth, pointComplex, largestLoop)
 		intercircle.addOrbitsIfLarge(
 			self.distanceFeedRate, largestLoop, self.orbitalFeedRatePerSecond, remainingOrbitTime, self.highestZ)
 
@@ -224,19 +225,9 @@ class CoolSkein:
 			self.coolTemperature = self.oldTemperature - layerCool
 			self.addTemperature(self.coolTemperature)
 
-	def addFlowRateLineIfNecessary(self, flowRate):
-		'Add a line of flow rate if different.'
-		flowRateString = euclidean.getFourSignificantFigures(flowRate)
-		if flowRateString == self.oldFlowRateString:
-			return
-		if flowRateString != None:
-			self.distanceFeedRate.addLine('M108 S' + flowRateString)
-		self.oldFlowRateString = flowRateString
-
-	def addFlowRateMultipliedLineIfNecessary(self, flowRate):
+	def addFlowRate(self, flowRate):
 		'Add a multipled line of flow rate if different.'
-		if flowRate != None:
-			self.addFlowRateLineIfNecessary(self.multiplier * flowRate)
+		self.distanceFeedRate.addLine('M108 S' + euclidean.getFourSignificantFigures(flowRate))
 
 	def addGcodeFromFeedRateMovementZ(self, feedRateMinute, point, z):
 		'Add a movement to the output.'
@@ -252,16 +243,15 @@ class CoolSkein:
 		self.distanceFeedRate.addLine('M104 S' + euclidean.getRoundedToThreePlaces(temperature))
 
 	def getCoolMove(self, line, location, splitLine):
-		'Add line to time spent on layer.'
+		'Get cool line according to time spent on layer.'
 		self.feedRateMinute = gcodec.getFeedRateMinute(self.feedRateMinute, splitLine)
-		self.addFlowRateMultipliedLineIfNecessary(self.oldFlowRate)
 		return self.distanceFeedRate.getLineWithFeedRate(self.multiplier * self.feedRateMinute, line, splitLine)
 
 	def getCraftedGcode(self, gcodeText, repository):
 		'Parse gcode text and store the cool gcode.'
 		self.repository = repository
-		self.coolEndLines = settings.getLinesInAlterationsOrGivenDirectory(repository.nameOfCoolEndFile.value)
-		self.coolStartLines = settings.getLinesInAlterationsOrGivenDirectory(repository.nameOfCoolStartFile.value)
+		self.coolEndLines = settings.getAlterationFileLines(repository.nameOfCoolEndFile.value)
+		self.coolStartLines = settings.getAlterationFileLines(repository.nameOfCoolStartFile.value)
 		self.halfCorner = complex(repository.minimumOrbitalRadius.value, repository.minimumOrbitalRadius.value)
 		self.lines = archive.getTextLines(gcodeText)
 		self.minimumArea = 4.0 * repository.minimumOrbitalRadius.value * repository.minimumOrbitalRadius.value
@@ -277,7 +267,7 @@ class CoolSkein:
 			self.parseLine(line)
 		if repository.turnFanOffAtEnding.value:
 			self.distanceFeedRate.addLine('M107')
-		return self.distanceFeedRate.output.getvalue()
+		return gcodec.getGcodeWithoutDuplication('M108', self.distanceFeedRate.output.getvalue())
 
 	def getLayerTime(self):
 		'Get the time the extruder spends on the layer.'
@@ -336,7 +326,7 @@ class CoolSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
 			if firstWord == 'M108':
-				self.setOperatingFlowString(splitLine)
+				self.oldFlowRate = float(splitLine[1][1 :])
 			elif firstWord == '(<perimeterWidth>':
 				self.perimeterWidth = float(splitLine[1])
 				if self.repository.turnFanOnAtBeginning.value:
@@ -344,6 +334,8 @@ class CoolSkein:
 			elif firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('cool')
 				return
+			elif firstWord == '(<operatingFlowRate>':
+				self.oldFlowRate = float(splitLine[1])
 			elif firstWord == '(<orbitalFeedRatePerSecond>':
 				self.orbitalFeedRatePerSecond = float(splitLine[1])
 			self.distanceFeedRate.addLine(line)
@@ -367,8 +359,8 @@ class CoolSkein:
 		elif firstWord == 'M104':
 			self.oldTemperature = gcodec.getDoubleAfterFirstLetter(splitLine[1])
 		elif firstWord == 'M108':
-			self.setOperatingFlowString(splitLine)
-			self.addFlowRateMultipliedLineIfNecessary(self.oldFlowRate)
+			self.oldFlowRate = float(splitLine[1][1 :])
+			self.addFlowRate(self.multiplier * self.oldFlowRate)
 			return
 		elif firstWord == '(<boundaryPoint>':
 			self.boundaryLoop.append(gcodec.getLocationFromSplitLine(None, splitLine).dropAxis())
@@ -383,6 +375,7 @@ class CoolSkein:
 				self.addOrbitsIfNecessary(remainingOrbitTime)
 			else:
 				self.setMultiplier(remainingOrbitTime)
+				self.addFlowRate(self.multiplier * self.oldFlowRate)
 			z = float(splitLine[1])
 			self.boundaryLayer = euclidean.LoopLayer(z)
 			self.highestZ = max(z, self.highestZ)
@@ -394,7 +387,7 @@ class CoolSkein:
 			if self.coolTemperature != None:
 				self.addTemperature(self.oldTemperature)
 				self.coolTemperature = None
-			self.addFlowRateLineIfNecessary(self.oldFlowRate)
+			self.addFlowRate(self.oldFlowRate)
 		elif firstWord == '(<nestedRing>)':
 			self.boundaryLoop = []
 			self.boundaryLayer.loops.append(self.boundaryLoop)
@@ -404,10 +397,7 @@ class CoolSkein:
 		'Set the feed and flow rate multiplier.'
 		layerTimeActive = self.getLayerTimeActive()
 		self.multiplier = min(1.0, layerTimeActive / (remainingOrbitTime + layerTimeActive))
-
-	def setOperatingFlowString(self, splitLine):
-		'Set the operating flow string from the split line.'
-		self.oldFlowRate = float(splitLine[1][1 :])
+		
 
 
 def main():

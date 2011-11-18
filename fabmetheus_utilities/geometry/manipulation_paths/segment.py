@@ -84,7 +84,7 @@ def getSegmentPath( loop, path, pointIndex, segmentCenter ):
 
 def getSegmentPathDefault():
 	"Get segment path default."
-	return [ Vector3(), Vector3( 0.0, 1.0 ) ]
+	return [Vector3(), Vector3(0.0, 1.0)]
 
 def getWedgePath( begin, centerBegin, centerEnd, centerEndMinusBegin, end, path ):
 	"Get segment path."
