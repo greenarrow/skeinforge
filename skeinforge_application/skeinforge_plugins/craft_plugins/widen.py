@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 """
 This page is in the table of contents.
-Widen will widen the outside perimeters away from the inside perimeters, so that the outsides will be at least two perimeter widths away from the insides and therefore the outside filaments will not overlap the inside filaments.
+Widen will widen the outside edges away from the inside edges, so that the outsides will be at least two edge widths away from the insides and therefore the outside filaments will not overlap the inside filaments.
 
-For example, if a mug has a very thin wall, widen would widen the outside of the mug so that the wall of the mug would be two perimeter widths wide, and the outside wall filament would not overlap the inside filament.
+For example, if a mug has a very thin wall, widen would widen the outside of the mug so that the wall of the mug would be two edge widths wide, and the outside wall filament would not overlap the inside filament.
 
 For another example, if the outside of the object runs right next to a hole, widen would widen the wall around the hole so that the wall would bulge out around the hole, and the outside filament would not overlap the hole filament.
 
@@ -155,14 +155,14 @@ class WidenSkein:
 				else:
 					widdershinsLoops.append(loop)
 			else:
-#				clockwiseInsetLoop = intercircle.getLargestInsetLoopFromLoop(loop, self.doublePerimeterWidth)
+#				clockwiseInsetLoop = intercircle.getLargestInsetLoopFromLoop(loop, self.doubleEdgeWidth)
 #				clockwiseInsetLoop.reverse()
 #				clockwiseInsetLoops.append(clockwiseInsetLoop)
-				clockwiseInsetLoops += intercircle.getInsetLoopsFromLoop(loop, self.doublePerimeterWidth)
+				clockwiseInsetLoops += intercircle.getInsetLoopsFromLoop(loop, self.doubleEdgeWidth)
 				self.distanceFeedRate.addGcodeFromLoop(loop, loopLayer.z)
 		for widdershinsLoop in widdershinsLoops:
-			outsetLoop = intercircle.getLargestInsetLoopFromLoop(widdershinsLoop, -self.doublePerimeterWidth)
-			widenedLoop = getWidenedLoop(widdershinsLoop, clockwiseInsetLoops, outsetLoop, self.perimeterWidth)
+			outsetLoop = intercircle.getLargestInsetLoopFromLoop(widdershinsLoop, -self.doubleEdgeWidth)
+			widenedLoop = getWidenedLoop(widdershinsLoop, clockwiseInsetLoops, outsetLoop, self.edgeWidth)
 			self.distanceFeedRate.addGcodeFromLoop(widenedLoop, loopLayer.z)
 
 	def getCraftedGcode(self, gcodeText, repository):
@@ -186,9 +186,9 @@ class WidenSkein:
 			elif firstWord == '(<crafting>)':
 				self.distanceFeedRate.addLine(line)
 				return
-			elif firstWord == '(<perimeterWidth>':
-				self.perimeterWidth = float(splitLine[1])
-				self.doublePerimeterWidth = 2.0 * self.perimeterWidth
+			elif firstWord == '(<edgeWidth>':
+				self.edgeWidth = float(splitLine[1])
+				self.doubleEdgeWidth = 2.0 * self.edgeWidth
 			self.distanceFeedRate.addLine(line)
 
 	def parseLine(self, line):

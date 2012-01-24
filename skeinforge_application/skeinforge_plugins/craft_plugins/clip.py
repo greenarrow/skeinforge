@@ -12,14 +12,14 @@ The default 'Activate Clip' checkbox is on.  When it is on, the functions descri
 ===Clip Over Perimeter Width===
 Default is 0.2.
 
-Defines the ratio of the amount each end of the loop is clipped over the perimeter width.  The total gap will therefore be twice the clip.  If the ratio is too high loops will have a gap, if the ratio is too low there will be a bulge at the loop ends.
+Defines the ratio of the amount each end of the loop is clipped over the edge width.  The total gap will therefore be twice the clip.  If the ratio is too high loops will have a gap, if the ratio is too low there will be a bulge at the loop ends.
 
-This setting will affect the output of clip, and the output of the skin.  In skin the half width perimeters will be clipped by according to this setting.
+This setting will affect the output of clip, and the output of the skin.  In skin the half width edges will be clipped by according to this setting.
 
 ===Maximum Connection Distance Over Perimeter Width===
 Default is ten.
 
-Defines the ratio of the maximum connection distance between loops over the perimeter width.
+Defines the ratio of the maximum connection distance between loops over the edge width.
 
 Clip will attempt to connect loops that end close to each other, combining them into a spiral, so that the extruder does not stop and restart.  This setting sets the maximum gap size to connect.  This feature can reduce the amount of extra material or gaps formed at the loop end.
 
@@ -93,8 +93,8 @@ class ClipRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Clip', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Clip')
 		self.activateClip = settings.BooleanSetting().getFromValue('Activate Clip', self, True )
-		self.clipOverPerimeterWidth = settings.FloatSpin().getFromValue( 0.1, 'Clip Over Perimeter Width (ratio):', self, 0.8, 0.5 )
-		self.maximumConnectionDistanceOverPerimeterWidth = settings.FloatSpin().getFromValue( 1.0, 'Maximum Connection Distance Over Perimeter Width (ratio):', self, 20.0, 10.0 )
+		self.clipOverEdgeWidth = settings.FloatSpin().getFromValue( 0.1, 'Clip Over Perimeter Width (ratio):', self, 0.8, 0.5 )
+		self.maximumConnectionDistanceOverEdgeWidth = settings.FloatSpin().getFromValue( 1.0, 'Maximum Connection Distance Over Perimeter Width (ratio):', self, 20.0, 10.0 )
 		self.executeTitle = 'Clip'
 
 	def execute(self):
@@ -110,8 +110,8 @@ class ClipSkein:
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.extruderActive = False
 		self.feedRateMinute = None
+		self.isEdge = False
 		self.isLoop = False
-		self.isPerimeter = False
 		self.layerCount = settings.LayerCount()
 		self.loopPath = None
 		self.lineIndex = 0
@@ -144,7 +144,7 @@ class ClipSkein:
 			removeTable = {}
 			euclidean.addLoopToPixelTable(self.loopPath.path, removeTable, self.layerPixelWidth)
 			euclidean.removePixelTableFromPixelTable( removeTable, self.layerPixelTable )
-			self.loopPath.path = euclidean.getClippedSimplifiedLoopPath(self.clipLength, self.loopPath.path, self.perimeterWidth)
+			self.loopPath.path = euclidean.getClippedSimplifiedLoopPath(self.clipLength, self.loopPath.path, self.edgeWidth)
 			euclidean.addLoopToPixelTable( self.loopPath.path, self.layerPixelTable, self.layerPixelWidth )
 		if self.oldWiddershins == None:
 			self.addGcodeFromThreadZ( self.loopPath.path, self.loopPath.z )
@@ -193,8 +193,8 @@ class ClipSkein:
 		"Determine if the next thread is a loop."
 		if self.oldLocation == None or self.maximumConnectionDistance <= 0.0:
 			return False
- 		isLoop = False
- 		isPerimeter = False
+		isEdge = False
+		isLoop = False
 		location = self.oldLocation
 		for afterIndex in xrange(self.lineIndex + 1, len(self.lines)):
 			line = self.lines[afterIndex]
@@ -204,10 +204,10 @@ class ClipSkein:
 				location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 			elif firstWord == '(<loop>':
 				isLoop = True
-			elif firstWord == '(<perimeter>':
-				isPerimeter = True
+			elif firstWord == '(<edge>':
+				isEdge = True
 			elif firstWord == 'M101':
-				if isLoop != self.isLoop or isPerimeter != self.isPerimeter:
+				if isLoop != self.isLoop or isEdge != self.isEdge:
 					return False
 				return self.getConnectionIsCloseWithoutOverlap(location, path)
 			elif firstWord == '(<layer>':
@@ -230,7 +230,7 @@ class ClipSkein:
 		"Add to loop path if this is a loop or path."
 		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		self.feedRateMinute = gcodec.getFeedRateMinute(self.feedRateMinute, splitLine)
-		if self.isLoop or self.isPerimeter:
+		if self.isLoop or self.isEdge:
 			if self.isNextExtruderOn():
 				self.loopPath = euclidean.PathZ(location.z)
 		if self.loopPath == None:
@@ -253,14 +253,14 @@ class ClipSkein:
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('clip')
 				return
-			elif firstWord == '(<perimeterWidth>':
-				self.distanceFeedRate.addTagBracketedLine('clipOverPerimeterWidth', clipRepository.clipOverPerimeterWidth.value)
-				self.perimeterWidth = float(splitLine[1])
-				absolutePerimeterWidth = abs(self.perimeterWidth)
-				self.clipLength = clipRepository.clipOverPerimeterWidth.value * self.perimeterWidth
-				self.connectingStepLength = 0.5 * absolutePerimeterWidth
-				self.layerPixelWidth = 0.34321 * absolutePerimeterWidth
-				self.maximumConnectionDistance = clipRepository.maximumConnectionDistanceOverPerimeterWidth.value * absolutePerimeterWidth
+			elif firstWord == '(<edgeWidth>':
+				self.distanceFeedRate.addTagBracketedLine('clipOverEdgeWidth', clipRepository.clipOverEdgeWidth.value)
+				self.edgeWidth = float(splitLine[1])
+				absoluteEdgeWidth = abs(self.edgeWidth)
+				self.clipLength = clipRepository.clipOverEdgeWidth * self.edgeWidth
+				self.connectingStepLength = 0.5 * absoluteEdgeWidth
+				self.layerPixelWidth = 0.34321 * absoluteEdgeWidth
+				self.maximumConnectionDistance = clipRepository.maximumConnectionDistanceOverEdgeWidth.value * absoluteEdgeWidth
 			elif firstWord == '(<travelFeedRatePerSecond>':
 				self.travelFeedRateMinute = 60.0 * float(splitLine[1])
 			self.distanceFeedRate.addLine(line)
@@ -286,10 +286,10 @@ class ClipSkein:
 			if self.loopPath != None:
 				self.addTailoredLoopPath(line)
 				return
-		elif firstWord == '(<perimeter>':
-			self.isPerimeter = True
-		elif firstWord == '(</perimeter>)':
-			self.isPerimeter = False
+		elif firstWord == '(<edge>':
+			self.isEdge = True
+		elif firstWord == '(</edge>)':
+			self.isEdge = False
 		if self.loopPath == None:
 			self.distanceFeedRate.addLine(line)
 

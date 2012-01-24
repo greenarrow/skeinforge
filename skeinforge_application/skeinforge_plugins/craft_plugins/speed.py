@@ -63,7 +63,7 @@ Defines the object first layer infill feed rate multiplier.  The greater the 'Ob
 ====Object First Layer Feed Rate Perimeter Multiplier====
 Default is 0.4.
 
-Defines the object first layer perimeter feed rate multiplier.  The greater the 'Object First Layer Feed Rate Perimeter Multiplier, the thinner the perimeter, the lower the 'Object First Layer Feed Rate Perimeter Multiplier', the thicker the perimeter.
+Defines the object first layer edge feed rate multiplier.  The greater the 'Object First Layer Feed Rate Perimeter Multiplier, the thinner the edge, the lower the 'Object First Layer Feed Rate Perimeter Multiplier', the thicker the edge.
 
 ====Object First Layer Flow Rate Infill Multiplier====
 Default is 0.4.
@@ -73,7 +73,7 @@ Defines the object first layer infill flow rate multiplier.  The greater the 'Ob
 ====Object First Layer Flow Rate Perimeter Multiplier====
 Default is 0.4.
 
-Defines the object first layer perimeter flow rate multiplier.  The greater the 'Object First Layer Flow Rate Perimeter Multiplier', the thicker the perimeter, the lower the 'Object First Layer Flow Rate Perimeter Multiplier, the thinner the perimeter.
+Defines the object first layer edge flow rate multiplier.  The greater the 'Object First Layer Flow Rate Perimeter Multiplier', the thicker the edge, the lower the 'Object First Layer Flow Rate Perimeter Multiplier, the thinner the edge.
 
 ===Orbital Feed Rate over Operating Feed Rate===
 Default is 0.5.
@@ -89,12 +89,12 @@ Perimeter Flow Rate over Operating Flow Rate ~ Perimeter Feed Rate over Operatin
 ====Perimeter Feed Rate Multiplier====
 Default: 1.0
 
-Defines the ratio of the feed rate of the perimeter (outside shell) over the feed rate of the infill.  If you for example set this to 0.8 you will have a "stronger" outside edge than inside extrusion as the outside edge will be printed slower hence better lamination will occur and more filament will be placed there.
+Defines the ratio of the feed rate of the edge (outside shell) over the feed rate of the infill.  If you for example set this to 0.8 you will have a "stronger" outside edge than inside extrusion as the outside edge will be printed slower hence better lamination will occur and more filament will be placed there.
 
 ====Perimeter Flow Rate Multiplier====
 Default: 1.0
 
-Defines the ratio of the flow rate of the perimeter (outside shell) over the flow rate of the infill.  If you want the same thickness of the perimeter but better lamination you need to compensate for the slower feed rate by slowing down the flow rate, but all combinations are possible for different results.
+Defines the ratio of the flow rate of the edge (outside shell) over the flow rate of the infill.  If you want the same thickness of the edge but better lamination you need to compensate for the slower feed rate by slowing down the flow rate, but all combinations are possible for different results.
 
 ===Travel Feed Rate===
 Default is sixteen millimeters per second.
@@ -166,7 +166,11 @@ class SpeedRepository:
 	def __init__(self):
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.speed.html', self )
-		self.baseNameSynonym = 'raft.csv'
+		self.baseNameSynonymDictionary = {
+			'Object First Layer Feed Rate Infill Multiplier (ratio):' : 'raft.csv',
+			'Object First Layer Feed Rate Perimeter Multiplier (ratio):' : 'raft.csv',
+			'Object First Layer Flow Rate Infill Multiplier (ratio):' : 'raft.csv',
+			'Object First Layer Flow Rate Perimeter Multiplier (ratio):' : 'raft.csv'}
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Speed', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Speed')
 		self.activateSpeed = settings.BooleanSetting().getFromValue('Activate Speed', self, True )
@@ -217,8 +221,8 @@ class SpeedSkein:
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.feedRatePerSecond = 16.0
 		self.isBridgeLayer = False
+		self.isEdgePath = False
 		self.isExtruderActive = False
-		self.isPerimeterPath = False
 		self.layerIndex = -1
 		self.lineIndex = 0
 		self.lines = None
@@ -231,10 +235,10 @@ class SpeedSkein:
 		flowRate = self.repository.flowRateSetting.value
 		if self.isBridgeLayer:
 			flowRate *= self.repository.bridgeFlowRateMultiplier.value
-		if self.isPerimeterPath:
+		if self.isEdgePath:
 			flowRate *= self.repository.perimeterFlowRateMultiplier.value
 		if self.layerIndex == 0:
-			if self.isPerimeterPath:
+			if self.isEdgePath:
 				flowRate *= self.repository.objectFirstLayerFlowRatePerimeterMultiplier.value
 			else:
 				flowRate *= self.repository.objectFirstLayerFlowRateInfillMultiplier.value
@@ -268,10 +272,10 @@ class SpeedSkein:
 		feedRateMinute = 60.0 * self.feedRatePerSecond
 		if self.isBridgeLayer:
 			feedRateMinute *= self.repository.bridgeFeedRateMultiplier.value
-		if self.isPerimeterPath:
+		if self.isEdgePath:
 			feedRateMinute *= self.repository.perimeterFeedRateMultiplier.value
 		if self.layerIndex == 0:
-			if self.isPerimeterPath:
+			if self.isEdgePath:
 				feedRateMinute *= self.repository.objectFirstLayerFeedRatePerimeterMultiplier.value
 			else:
 				feedRateMinute *= self.repository.objectFirstLayerFeedRateInfillMultiplier.value
@@ -287,13 +291,13 @@ class SpeedSkein:
 			splitLine = gcodec.getSplitLineBeforeBracketSemicolon(line)
 			firstWord = gcodec.getFirstWord(splitLine)
 			self.distanceFeedRate.parseSplitLine(firstWord, splitLine)
-			if firstWord == '(<layerThickness>':
-				self.layerThickness = float(splitLine[1])
+			if firstWord == '(<layerHeight>':
+				self.layerHeight = float(splitLine[1])
 			elif firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('speed')
 				return
-			elif firstWord == '(<perimeterWidth>':
-				self.absolutePerimeterWidth = abs(float(splitLine[1]))
+			elif firstWord == '(<edgeWidth>':
+				self.absoluteEdgeWidth = abs(float(splitLine[1]))
 				self.distanceFeedRate.addTagBracketedLine('maximumZFeedRatePerSecond', self.repository.maximumZFeedRatePerSecond.value )
 				self.distanceFeedRate.addTagBracketedLine('objectFirstLayerFeedRateInfillMultiplier', self.repository.objectFirstLayerFeedRateInfillMultiplier.value)
 				self.distanceFeedRate.addTagBracketedLine('operatingFeedRatePerSecond', self.feedRatePerSecond )
@@ -328,10 +332,10 @@ class SpeedSkein:
 			settings.printProgress(self.layerIndex, 'speed')
 			self.isBridgeLayer = False
 			self.addFlowRateLine()
-		elif firstWord == '(<perimeter>' or firstWord == '(<perimeterPath>)':
-			self.isPerimeterPath = True
-		elif firstWord == '(</perimeter>)' or firstWord == '(</perimeterPath>)':
-			self.isPerimeterPath = False
+		elif firstWord == '(<edge>' or firstWord == '(<edgePath>)':
+			self.isEdgePath = True
+		elif firstWord == '(</edge>)' or firstWord == '(</edgePath>)':
+			self.isEdgePath = False
 		self.distanceFeedRate.addLine(line)
 
 

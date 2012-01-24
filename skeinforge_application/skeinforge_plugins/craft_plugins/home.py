@@ -110,7 +110,7 @@ class HomeSkein:
 	def addFloat( self, begin, end ):
 		"Add dive to the original height."
 		beginEndDistance = begin.distance(end)
-		alongWay = self.absolutePerimeterWidth / beginEndDistance
+		alongWay = self.absoluteEdgeWidth / beginEndDistance
 		closeToEnd = euclidean.getIntermediateLocation( alongWay, end, begin )
 		closeToEnd.z = self.highestZ
 		self.distanceFeedRate.addLine( self.distanceFeedRate.getLinearGcodeMovementWithFeedRate( self.travelFeedRateMinute, closeToEnd.dropAxis(), closeToEnd.z ) )
@@ -161,8 +161,8 @@ class HomeSkein:
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('home')
 				return
-			elif firstWord == '(<perimeterWidth>':
-				self.absolutePerimeterWidth = abs(float(splitLine[1]))
+			elif firstWord == '(<edgeWidth>':
+				self.absoluteEdgeWidth = abs(float(splitLine[1]))
 			elif firstWord == '(<travelFeedRatePerSecond>':
 				self.travelFeedRateMinute = 60.0 * float(splitLine[1])
 			self.distanceFeedRate.addLine(line)

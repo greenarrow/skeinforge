@@ -96,9 +96,9 @@ def getJumpPoint(begin, end, loop, runningJumpSpace):
 		jumpPoint = distancePoint.point
 	return jumpPoint
 
-def getJumpPointIfInside(boundary, otherPoint, perimeterWidth, runningJumpSpace):
+def getJumpPointIfInside(boundary, otherPoint, edgeWidth, runningJumpSpace):
 	'Get the jump point if it is inside the boundary, otherwise return None.'
-	insetBoundary = intercircle.getSimplifiedInsetFromClockwiseLoop(boundary, -perimeterWidth)
+	insetBoundary = intercircle.getSimplifiedInsetFromClockwiseLoop(boundary, -edgeWidth)
 	closestJumpDistanceIndex = euclidean.getClosestDistanceIndexToLine(otherPoint, insetBoundary)
 	jumpIndex = (closestJumpDistanceIndex.index + 1) % len(insetBoundary)
 	jumpPoint = euclidean.getClosestPointOnSegment(insetBoundary[closestJumpDistanceIndex.index], insetBoundary[jumpIndex], otherPoint)
@@ -139,15 +139,15 @@ class BoundarySegment:
 		'Initialize'
 		self.segment = [begin]
 
-	def getSegment(self, boundarySegmentIndex, boundarySegments, perimeterWidth, runningJumpSpace):
+	def getSegment(self, boundarySegmentIndex, boundarySegments, edgeWidth, runningJumpSpace):
 		'Get both paths along the loop from the point closest to the begin to the point closest to the end.'
-		negativePerimeterWidth = -perimeterWidth
+		negativeEdgeWidth = -edgeWidth
 		nextBoundarySegment = boundarySegments[boundarySegmentIndex + 1]
 		nextBegin = nextBoundarySegment.segment[0]
-		end = getJumpPointIfInside(self.boundary, nextBegin, perimeterWidth, runningJumpSpace)
+		end = getJumpPointIfInside(self.boundary, nextBegin, edgeWidth, runningJumpSpace)
 		if end == None:
 			end = self.boundary.segment[1]
-		nextBegin = getJumpPointIfInside(nextBoundarySegment.boundary, end, perimeterWidth, runningJumpSpace)
+		nextBegin = getJumpPointIfInside(nextBoundarySegment.boundary, end, edgeWidth, runningJumpSpace)
 		if nextBegin != None:
 			nextBoundarySegment.segment[0] = nextBegin
 		return (self.segment[0], end)
@@ -247,7 +247,7 @@ class CombSkein:
 		for boundarySegmentIndex, boundarySegment in enumerate(boundarySegments):
 			segment = boundarySegment.segment
 			if boundarySegmentIndex < len(boundarySegments) - 1 and self.runningJumpSpace > 0.0:
-				segment = boundarySegment.getSegment(boundarySegmentIndex, boundarySegments, self.perimeterWidth, self.runningJumpSpace)
+				segment = boundarySegment.getSegment(boundarySegmentIndex, boundarySegments, self.edgeWidth, self.runningJumpSpace)
 			aroundBetweenPath += self.getAroundBetweenLineSegment(segment[0], boundaries, segment[1])
 			if boundarySegmentIndex < len(boundarySegments) - 1:
 				aroundBetweenPath.append(segment[1])
@@ -344,16 +344,16 @@ class CombSkein:
 		'Get the points along the segment if it is required to keep the path inside the widdershin boundaries.'
 		segment = end - begin
 		segmentLength = abs(segment)
-		if segmentLength < self.quadruplePerimeterWidth:
+		if segmentLength < self.quadrupleEdgeWidth:
 			return []
-		segmentHalfPerimeter = self.halfPerimeterWidth / segmentLength * segment
+		segmentHalfPerimeter = self.halfEdgeWidth / segmentLength * segment
 		justAfterBegin = begin + segmentHalfPerimeter
 		justBeforeEnd = end - segmentHalfPerimeter
 		widdershins = self.getWiddershins()
 		if not euclidean.isLineIntersectingLoops(widdershins, justAfterBegin, justBeforeEnd):
 			return []
 		numberOfSteps = 10
-		stepLength = (segmentLength - self.doublePerimeterWidth) / float(numberOfSteps)
+		stepLength = (segmentLength - self.doubleEdgeWidth) / float(numberOfSteps)
 		for step in xrange(1, numberOfSteps + 1):
 			along = begin + stepLength * step
 			if not euclidean.isLineIntersectingLoops(widdershins, along, justBeforeEnd):
@@ -361,7 +361,7 @@ class CombSkein:
 		return []
 
 	def getPathBetween(self, loop, points):
-		"Add a path between the perimeter and the fill."
+		"Add a path between the edge and the fill."
 		paths = getPathsByIntersectedLoop(points[1], points[2], loop)
 		shortestPath = paths[int(euclidean.getPathLength(paths[1]) < euclidean.getPathLength(paths[0]))]
 		if len(shortestPath) < 2:
@@ -376,12 +376,12 @@ class CombSkein:
 			beginIndex = pointIndex - 1
 			if beginIndex >= 0:
 				begin = shortestPath[beginIndex]
-				centerPerpendicular = intercircle.getWiddershinsByLength(center, begin, self.perimeterWidth)
+				centerPerpendicular = intercircle.getWiddershinsByLength(center, begin, self.edgeWidth)
 			centerEnd = None
 			endIndex = pointIndex + 1
 			if endIndex < len(shortestPath):
 				end = shortestPath[endIndex]
-				centerEnd = intercircle.getWiddershinsByLength(end, center, self.perimeterWidth)
+				centerEnd = intercircle.getWiddershinsByLength(end, center, self.edgeWidth)
 			if centerPerpendicular == None:
 				centerPerpendicular = centerEnd
 			elif centerEnd != None:
@@ -438,12 +438,12 @@ class CombSkein:
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('comb')
 				return
-			elif firstWord == '(<perimeterWidth>':
-				self.perimeterWidth = float(splitLine[1])
-				self.betweenInset = 0.7 * self.perimeterWidth
-				self.doublePerimeterWidth = self.perimeterWidth + self.perimeterWidth
-				self.halfPerimeterWidth = 0.5 * self.perimeterWidth
-				self.quadruplePerimeterWidth = self.doublePerimeterWidth + self.doublePerimeterWidth
+			elif firstWord == '(<edgeWidth>':
+				self.edgeWidth = float(splitLine[1])
+				self.betweenInset = 0.7 * self.edgeWidth
+				self.doubleEdgeWidth = self.edgeWidth + self.edgeWidth
+				self.halfEdgeWidth = 0.5 * self.edgeWidth
+				self.quadrupleEdgeWidth = self.doubleEdgeWidth + self.doubleEdgeWidth
 			elif firstWord == '(<travelFeedRatePerSecond>':
 				self.travelFeedRateMinute = 60.0 * float(splitLine[1])
 			self.distanceFeedRate.addLine(line)

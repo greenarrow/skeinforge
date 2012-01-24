@@ -18,9 +18,9 @@ test.04hx06w_03fill_2cx2r_33EL.gcode
 would mean:
 
 * . (Carve section.)
-* 04h = 'Layer Thickness (mm):' 0.4
+* 04h = 'Layer Height (mm):' 0.4
 * x
-* 06w = 0.6 width i.e. 0.4 times 'Perimeter Width over Thickness (ratio):' 1.5
+* 06w = 0.6 width i.e. 0.4 times 'Edge Width over Height (ratio):' 1.5
 * _ (Fill section.)
 * 03fill = 'Infill Solidity (ratio):' 0.3
 * _ (Multiply section; if there is one column and one row then this section is not shown.)
@@ -138,12 +138,12 @@ def getCraftedTextFromText(gcodeText, repository=None):
 def getDescriptionCarve(lines):
 	'Get the description for carve.'
 	descriptionCarve = ''
-	layerThicknessString = getSettingString(lines, 'carve', 'Layer Thickness')
+	layerThicknessString = getSettingString(lines, 'carve', 'Layer Height')
 	if layerThicknessString != None:
 		descriptionCarve += layerThicknessString.replace('.', '') + 'h'
-	perimeterWidthString = getSettingString(lines, 'carve', 'Perimeter Width over Thickness')
-	if perimeterWidthString != None:
-		descriptionCarve += 'x%sw' % str(float(perimeterWidthString) * float(layerThicknessString)).replace('.', '')
+	edgeWidthString = getSettingString(lines, 'carve', 'Edge Width over Height')
+	if edgeWidthString != None:
+		descriptionCarve += 'x%sw' % str(float(edgeWidthString) * float(layerThicknessString)).replace('.', '')
 	return descriptionCarve
 
 def getDescriptionFill(lines):

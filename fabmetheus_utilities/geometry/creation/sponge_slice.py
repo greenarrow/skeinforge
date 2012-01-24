@@ -137,7 +137,7 @@ class SpongeSliceDerivation:
 		self.searchAttempts = evaluate.getEvaluatedInt(0, elementNode, 'searchAttempts')
 		self.searchRadiusOverRadius = evaluate.getEvaluatedFloat(1.0, elementNode, 'searchRadiusOverRadius')
 		self.seed = evaluate.getEvaluatedInt(None, elementNode, 'seed')
-		self.wallThickness = evaluate.getEvaluatedFloat(2.0 * setting.getPerimeterWidth(elementNode), elementNode, 'wallThickness')
+		self.wallThickness = evaluate.getEvaluatedFloat(2.0 * setting.getEdgeWidth(elementNode), elementNode, 'wallThickness')
 		# Set derived variables.
 		self.halfWallThickness = 0.5 * self.wallThickness
 		self.inradiusMinusThickness = self.inradius - complex(self.wallThickness, self.wallThickness)

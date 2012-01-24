@@ -808,13 +808,13 @@ class TriangleMesh( group.Group ):
 		'Get the boundary layers.'
 		if self.getMinimumZ() == None:
 			return []
-		halfHeight = 0.5 * self.layerThickness
-		self.zoneArrangement = ZoneArrangement(self.layerThickness, self.getTransformedVertexes())
+		halfHeight = 0.5 * self.layerHeight
+		self.zoneArrangement = ZoneArrangement(self.layerHeight, self.getTransformedVertexes())
 		layerTop = self.cornerMaximum.z - halfHeight * 0.5
 		z = self.cornerMinimum.z + halfHeight
 		while z < layerTop:
 			getLoopLayerAppend(self.loopLayers, z).loops = self.getLoopsFromMesh(self.zoneArrangement.getEmptyZ(z))
-			z += self.layerThickness
+			z += self.layerHeight
 		return self.loopLayers
 
 	def getCarveCornerMaximum(self):
@@ -825,9 +825,9 @@ class TriangleMesh( group.Group ):
 		'Get the corner minimum of the vertexes.'
 		return self.cornerMinimum
 
-	def getCarveLayerThickness(self):
-		'Get the layer thickness.'
-		return self.layerThickness
+	def getCarveLayerHeight(self):
+		'Get the layer height.'
+		return self.layerHeight
 
 	def getFabmetheusXML(self):
 		'Return the fabmetheus XML.'
@@ -901,9 +901,9 @@ class TriangleMesh( group.Group ):
 		'Set the is correct mesh flag.'
 		self.isCorrectMesh = isCorrectMesh
 
-	def setCarveLayerThickness( self, layerThickness ):
-		'Set the layer thickness.'
-		self.layerThickness = layerThickness
+	def setCarveLayerHeight( self, layerHeight ):
+		'Set the layer height.'
+		self.layerHeight = layerHeight
 
 	def setEdgesForAllFaces(self):
 		'Set the face edges of all the faces.'
@@ -914,9 +914,9 @@ class TriangleMesh( group.Group ):
 
 class ZoneArrangement:
 	'A zone arrangement.'
-	def __init__(self, layerThickness, vertexes):
+	def __init__(self, layerHeight, vertexes):
 		'Initialize the zone interval and the zZone table.'
-		self.zoneInterval = layerThickness / math.sqrt(len(vertexes)) / 1000.0
+		self.zoneInterval = layerHeight / math.sqrt(len(vertexes)) / 1000.0
 		self.zZoneSet = set()
 		for point in vertexes:
 			zoneIndexFloat = point.z / self.zoneInterval

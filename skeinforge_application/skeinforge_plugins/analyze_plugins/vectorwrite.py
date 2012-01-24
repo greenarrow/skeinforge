@@ -25,7 +25,7 @@ If 'Add Paths' is selected, the paths will be added in pink to the the scalable 
 ===Add Perimeters===
 Default is on.
 
-If 'Add Perimeters' is selected, the perimeters will be added to the the scalable vector graphics output.  The outer perimeters will be red and the inner perimeters will be orange.
+If 'Add Perimeters' is selected, the edges will be added to the the scalable vector graphics output.  The outer edges will be red and the inner edges will be orange.
 
 ===Layers===
 ====Layers From====
@@ -159,11 +159,11 @@ class ThreadLayer:
 		return str(self.__dict__)
 
 	def getTotalNumberOfThreads(self):
-		'Get the total number of loops, paths and perimeters.'
+		'Get the total number of loops, paths and edges.'
 		return len(self.boundaryLoops) + len(self.innerPerimeters) + len(self.loops) + len(self.outerPerimeters) + len(self.paths)
 
 	def maximize(self, vector3):
-		'Maximize the vector3 over the loops, paths and perimeters.'
+		'Maximize the vector3 over the loops, paths and edges.'
 		pointComplex = vector3.dropAxis()
 		pointComplex = euclidean.getMaximum(euclidean.getMaximumByComplexPaths(self.boundaryLoops), pointComplex)
 		pointComplex = euclidean.getMaximum(euclidean.getMaximumByComplexPaths(self.innerPerimeters), pointComplex)
@@ -173,7 +173,7 @@ class ThreadLayer:
 		vector3.setToXYZ(pointComplex.real, pointComplex.imag, max(self.z, vector3.z))
 
 	def minimize(self, vector3):
-		'Minimize the vector3 over the loops, paths and perimeters.'
+		'Minimize the vector3 over the loops, paths and edges.'
 		pointComplex = vector3.dropAxis()
 		pointComplex = euclidean.getMinimum(euclidean.getMinimumByComplexPaths(self.boundaryLoops), pointComplex)
 		pointComplex = euclidean.getMinimum(euclidean.getMinimumByComplexPaths(self.innerPerimeters), pointComplex)
@@ -232,8 +232,8 @@ class VectorwriteSkein:
 		self.thread = []
 
 	def addToPerimeters(self):
-		'Add the thread to the perimeters.'
-		self.isPerimeter = False
+		'Add the thread to the edges.'
+		self.isEdge = False
 		if len(self.thread) < 1:
 			return
 		if self.repository.addPerimeters.value:
@@ -249,9 +249,9 @@ class VectorwriteSkein:
 		cornerMinimum = Vector3(987654321.0, 987654321.0, 987654321.0)
 		self.boundaryLoop = None
 		self.extruderActive = False
+		self.isEdge = False
 		self.isLoop = False
 		self.isOuter = False
-		self.isPerimeter = False
 		self.lines = archive.getTextLines(gcodeText)
 		self.oldLocation = None
 		self.thread = []
@@ -264,16 +264,16 @@ class VectorwriteSkein:
 		for threadLayer in self.threadLayers:
 			threadLayer.maximize(cornerMaximum)
 			threadLayer.minimize(cornerMinimum)
-		halfLayerThickness = 0.5 * self.layerThickness
+		halfLayerThickness = 0.5 * self.layerHeight
 		cornerMaximum.z += halfLayerThickness
 		cornerMinimum.z -= halfLayerThickness
 		svgWriter = SVGWriterVectorwrite(
-			True, cornerMaximum, cornerMinimum, self.decimalPlacesCarried, self.layerThickness, self.perimeterWidth)
+			True, cornerMaximum, cornerMinimum, self.decimalPlacesCarried, self.layerHeight, self.edgeWidth)
 		return svgWriter.getReplacedSVGTemplate(fileName, 'vectorwrite', self.threadLayers)
 
-	def getCarveLayerThickness(self):
-		'Get the layer thickness.'
-		return self.layerThickness
+	def getCarveLayerHeight(self):
+		'Get the layer height.'
+		return self.layerHeight
 
 	def linearMove( self, splitLine ):
 		'Get statistics for a linear move.'
@@ -292,12 +292,12 @@ class VectorwriteSkein:
 			firstWord = gcodec.getFirstWord(splitLine)
 			if firstWord == '(<decimalPlacesCarried>':
 				self.decimalPlacesCarried = int(splitLine[1])
-			elif firstWord == '(<layerThickness>':
-				self.layerThickness = float(splitLine[1])
+			elif firstWord == '(<layerHeight>':
+				self.layerHeight = float(splitLine[1])
 			elif firstWord == '(<crafting>)':
 				return
-			elif firstWord == '(<perimeterWidth>':
-				self.perimeterWidth = float(splitLine[1])
+			elif firstWord == '(<edgeWidth>':
+				self.edgeWidth = float(splitLine[1])
 
 	def parseLine(self, line):
 		'Parse a gcode line and add it to the outset skein.'
@@ -314,7 +314,7 @@ class VectorwriteSkein:
 			if self.isLoop:
 				self.addToLoops()
 				return
-			if self.isPerimeter:
+			if self.isEdge:
 				self.addToPerimeters()
 				return
 			if self.repository.addPaths.value:
@@ -334,10 +334,10 @@ class VectorwriteSkein:
 			self.addToLoops()
 		elif firstWord == '(<loop>':
 			self.isLoop = True
-		elif firstWord == '(<perimeter>':
-			self.isPerimeter = True
+		elif firstWord == '(<edge>':
+			self.isEdge = True
 			self.isOuter = ( splitLine[1] == 'outer')
-		elif firstWord == '(</perimeter>)':
+		elif firstWord == '(</edge>)':
 			self.addToPerimeters()
 
 	def removeEmptyLayers(self):

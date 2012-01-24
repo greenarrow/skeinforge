@@ -40,7 +40,7 @@ When selected the build sequence will be reversed on every odd layer so that the
 ===Separation over Perimeter Width===
 Default is fifteen.
 
-Defines the ratio of separation between the shape copies over the perimeter width.
+Defines the ratio of separation between the shape copies over the edge width.
 
 ==Examples==
 The following examples multiply the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and multiply.py.
@@ -123,8 +123,7 @@ class MultiplyRepository:
 		self.numberOfRows = settings.IntSpin().getFromValue(1, 'Number of Rows (integer):', self, 10, 1)
 		settings.LabelSeparator().getFromRepository(self)
 		self.reverseSequenceEveryOddLayer = settings.BooleanSetting().getFromValue('Reverse Sequence every Odd Layer', self, False)
-		self.separationOverPerimeterWidth = settings.FloatSpin().getFromValue(
-			5.0, 'Separation over Perimeter Width (ratio):', self, 25.0, 15.0)
+		self.separationOverEdgeWidth = settings.FloatSpin().getFromValue(5.0, 'Separation over Perimeter Width (ratio):', self, 25.0, 15.0)
 		self.executeTitle = 'Multiply'
 
 	def execute(self):
@@ -226,8 +225,8 @@ class MultiplySkein:
 				self.distanceFeedRate.addLine(line)
 				self.lineIndex += 1
 				return
-			elif firstWord == '(<perimeterWidth>':
-				self.absolutePerimeterWidth = abs(float(splitLine[1]))
+			elif firstWord == '(<edgeWidth>':
+				self.absoluteEdgeWidth = abs(float(splitLine[1]))
 			self.distanceFeedRate.addLine(line)
 
 	def parseLine(self, line):
@@ -267,7 +266,7 @@ class MultiplySkein:
 				self.isExtrusionActive = False
 		self.extent = cornerMaximumComplex - cornerMinimumComplex
 		self.shapeCenter = 0.5 * (cornerMaximumComplex + cornerMinimumComplex)
-		self.separation = self.repository.separationOverPerimeterWidth.value * self.absolutePerimeterWidth
+		self.separation = self.repository.separationOverEdgeWidth.value * self.absoluteEdgeWidth
 		self.extentPlusSeparation = self.extent + complex(self.separation, self.separation)
 		columnsMinusOne = self.numberOfColumns - 1
 		rowsMinusOne = self.numberOfRows - 1

@@ -12,7 +12,7 @@ The default 'Activate Statistic' checkbox is on.  When it is on, the functions d
 ===Extrusion Diameter over Thickness===
 Default is 1.25.
 
-The 'Extrusion Diameter over Thickness is the ratio of the extrusion diameter over the layer thickness, the default is 1.25.  The extrusion fill density ratio that is printed to the console, ( it is derived quantity not a parameter ) is the area of the extrusion diameter over the extrusion width over the layer thickness.  Assuming the extrusion diameter is correct, a high value means the filament will be packed tightly, and the object will be almost as dense as the filament.  If the fill density ratio is too high, there could be too little room for the filament, and the extruder will end up plowing through the extra filament.  A low fill density ratio means the filaments will be far away from each other, the object will be leaky and light.  The fill density ratio with the default extrusion settings is around 0.68.
+The 'Extrusion Diameter over Thickness is the ratio of the extrusion diameter over the layer height, the default is 1.25.  The extrusion fill density ratio that is printed to the console, ( it is derived quantity not a parameter ) is the area of the extrusion diameter over the extrusion width over the layer height.  Assuming the extrusion diameter is correct, a high value means the filament will be packed tightly, and the object will be almost as dense as the filament.  If the fill density ratio is too high, there could be too little room for the filament, and the extruder will end up plowing through the extra filament.  A low fill density ratio means the filaments will be far away from each other, the object will be leaky and light.  The fill density ratio with the default extrusion settings is around 0.68.
 
 ===Print Statistics===
 Default is on.
@@ -94,8 +94,8 @@ Profile
 UM-PLA-HighQuality
 
 Slice
-Layer thickness is 0.4 mm.
-Perimeter width is 0.72 mm.
+Edge width is 0.72 mm.
+Layer height is 0.4 mm.
 
 """
 
@@ -212,7 +212,7 @@ class StatisticSkein:
 
 	def getCraftedGcode(self, gcodeText, repository):
 		"Parse gcode text and store the statistics."
-		self.absolutePerimeterWidth = 0.4
+		self.absoluteEdgeWidth = 0.4
 		self.characters = 0
 		self.cornerMaximum = Vector3(-987654321.0, -987654321.0, -987654321.0)
 		self.cornerMinimum = Vector3(987654321.0, 987654321.0, 987654321.0)
@@ -220,7 +220,7 @@ class StatisticSkein:
 		self.extruderSpeed = None
 		self.extruderToggled = 0
 		self.feedRateMinute = 600.0
-		self.layerThickness = 0.4
+		self.layerHeight = 0.4
 		self.numberOfLines = 0
 		self.procedures = []
 		self.repository = repository
@@ -233,8 +233,8 @@ class StatisticSkein:
 		averageFeedRate = self.totalDistanceTraveled / self.totalBuildTime
 		self.characters += self.numberOfLines
 		kilobytes = round( self.characters / 1024.0 )
-		halfPerimeterWidth = 0.5 * self.absolutePerimeterWidth
-		halfExtrusionCorner = Vector3( halfPerimeterWidth, halfPerimeterWidth, halfPerimeterWidth )
+		halfEdgeWidth = 0.5 * self.absoluteEdgeWidth
+		halfExtrusionCorner = Vector3( halfEdgeWidth, halfEdgeWidth, halfEdgeWidth )
 		self.cornerMaximum += halfExtrusionCorner
 		self.cornerMinimum -= halfExtrusionCorner
 		extent = self.cornerMaximum - self.cornerMinimum
@@ -242,7 +242,7 @@ class StatisticSkein:
 		roundedLow = euclidean.getRoundedPoint( self.cornerMinimum )
 		roundedExtent = euclidean.getRoundedPoint( extent )
 		axisString =  " axis extrusion starts at "
-		crossSectionArea = 0.9 * self.absolutePerimeterWidth * self.layerThickness # 0.9 if from the typical fill density
+		crossSectionArea = 0.9 * self.absoluteEdgeWidth * self.layerHeight # 0.9 if from the typical fill density
 		if self.extrusionDiameter != None:
 			crossSectionArea = math.pi / 4.0 * self.extrusionDiameter * self.extrusionDiameter
 		volumeExtruded = 0.001 * crossSectionArea * self.totalDistanceExtruded
@@ -277,7 +277,7 @@ class StatisticSkein:
 		self.addLine( "Cross section area is %s mm2." % euclidean.getThreeSignificantFigures( crossSectionArea ) )
 		if self.extrusionDiameter != None:
 			self.addLine( "Extrusion diameter is %s mm." % euclidean.getThreeSignificantFigures( self.extrusionDiameter ) )
-		self.addLine('Extrusion fill density ratio is %s' % euclidean.getThreeSignificantFigures( crossSectionArea / self.absolutePerimeterWidth / self.layerThickness ) )
+		self.addLine('Extrusion fill density ratio is %s' % euclidean.getThreeSignificantFigures( crossSectionArea / self.absoluteEdgeWidth / self.layerHeight ) )
 		self.addLine(' ')
 		self.addLine('Material')
 		self.addLine( "Mass extruded is %s grams." % euclidean.getThreeSignificantFigures( 1000.0 * mass ) )
@@ -297,8 +297,8 @@ class StatisticSkein:
 			self.addLine(self.profileName)
 		self.addLine(' ')
 		self.addLine('Slice')
-		self.addLine( "Layer thickness is %s mm." % euclidean.getThreeSignificantFigures( self.layerThickness ) )
-		self.addLine( "Perimeter width is %s mm." % euclidean.getThreeSignificantFigures( self.absolutePerimeterWidth ) )
+		self.addLine( "Edge width is %s mm." % euclidean.getThreeSignificantFigures( self.absoluteEdgeWidth ) )
+		self.addLine( "Layer height is %s mm." % euclidean.getThreeSignificantFigures( self.layerHeight ) )
 		self.addLine(' ')
 		return self.output.getvalue()
 
@@ -378,13 +378,13 @@ class StatisticSkein:
 			self.extruderSet( False )
 		elif firstWord == 'M108':
 			self.extruderSpeed = gcodec.getDoubleAfterFirstLetter(splitLine[1])
-		elif firstWord == '(<layerThickness>':
-			self.layerThickness = float(splitLine[1])
-			self.extrusionDiameter = self.repository.extrusionDiameterOverThickness.value * self.layerThickness
+		elif firstWord == '(<layerHeight>':
+			self.layerHeight = float(splitLine[1])
+			self.extrusionDiameter = self.repository.extrusionDiameterOverThickness.value * self.layerHeight
 		elif firstWord == '(<operatingFeedRatePerSecond>':
 			self.operatingFeedRatePerSecond = float(splitLine[1])
-		elif firstWord == '(<perimeterWidth>':
-			self.absolutePerimeterWidth = abs(float(splitLine[1]))
+		elif firstWord == '(<edgeWidth>':
+			self.absoluteEdgeWidth = abs(float(splitLine[1]))
 		elif firstWord == '(<procedureName>':
 			self.procedures.append(splitLine[1])
 		elif firstWord == '(<profileName>':

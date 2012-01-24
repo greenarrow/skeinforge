@@ -150,7 +150,7 @@ class BevelSkein:
 
 	def getExtruderOffReversalPoint( self, afterSegment, afterSegmentComplex, beforeSegment, beforeSegmentComplex, location ):
 		"If the extruder is off and the path is reversing, add intermediate slow points."
-		if self.repository.reversalSlowdownDistanceOverPerimeterWidth.value < 0.1:
+		if self.repository.reversalSlowdownDistanceOverEdgeWidth.value < 0.1:
 			return None
 		if self.extruderActive:
 			return None
@@ -205,12 +205,12 @@ class BevelSkein:
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('fillet')
 				return
-			elif firstWord == '(<perimeterWidth>':
-				perimeterWidth = abs(float(splitLine[1]))
-				self.curveSection = 0.7 * perimeterWidth
-				self.filletRadius = perimeterWidth * repository.filletRadiusOverPerimeterWidth.value
-				self.minimumRadius = 0.1 * perimeterWidth
-				self.reversalSlowdownDistance = perimeterWidth * repository.reversalSlowdownDistanceOverPerimeterWidth.value
+			elif firstWord == '(<edgeWidth>':
+				edgeWidth = abs(float(splitLine[1]))
+				self.curveSection = 0.7 * edgeWidth
+				self.filletRadius = edgeWidth * repository.filletRadiusOverEdgeWidth.value
+				self.minimumRadius = 0.1 * edgeWidth
+				self.reversalSlowdownDistance = edgeWidth * repository.reversalSlowdownDistanceOverEdgeWidth.value
 			self.distanceFeedRate.addLine(line)
 
 	def parseLine(self, line):
@@ -370,8 +370,8 @@ class FilletRepository:
 		self.arcSegment = settings.Radio().getFromRadio( filletLatentStringVar, 'Arc Segment', self, False )
 		self.bevel = settings.Radio().getFromRadio( filletLatentStringVar, 'Bevel', self, True )
 		self.cornerFeedRateMultiplier = settings.FloatSpin().getFromValue(0.8, 'Corner Feed Rate Multiplier (ratio):', self, 1.2, 1.0)
-		self.filletRadiusOverPerimeterWidth = settings.FloatSpin().getFromValue( 0.25, 'Fillet Radius over Perimeter Width (ratio):', self, 0.65, 0.35 )
-		self.reversalSlowdownDistanceOverPerimeterWidth = settings.FloatSpin().getFromValue( 0.3, 'Reversal Slowdown Distance over Perimeter Width (ratio):', self, 0.7, 0.5 )
+		self.filletRadiusOverEdgeWidth = settings.FloatSpin().getFromValue( 0.25, 'Fillet Radius over Perimeter Width (ratio):', self, 0.65, 0.35 )
+		self.reversalSlowdownDistanceOverEdgeWidth = settings.FloatSpin().getFromValue( 0.3, 'Reversal Slowdown Distance over Perimeter Width (ratio):', self, 0.7, 0.5 )
 		self.useIntermediateFeedRateInCorners = settings.BooleanSetting().getFromValue('Use Intermediate Feed Rate in Corners', self, True )
 		self.executeTitle = 'Fillet'
 

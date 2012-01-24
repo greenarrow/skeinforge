@@ -434,7 +434,7 @@ def addBevelGear(derivation, extrudeDerivation, pitchRadius, positives, teeth, v
 	loopLists = extrude.getLoopListsByPath(extrudeDerivation, None, vector3GearProfile[0], portionDirections)
 	firstLoopList = loopLists[0]
 	gearOverPinion = float(totalTeeth - teeth) / float(teeth)
-	thirdLayerHeight = 0.33333333333 * setting.getLayerThickness(derivation.elementNode)
+	thirdLayerHeight = 0.33333333333 * setting.getLayerHeight(derivation.elementNode)
 	pitchRadian = math.atan(math.sin(derivation.operatingRadian) / (gearOverPinion + math.cos(derivation.operatingRadian)))
 	coneDistance = pitchRadius / math.sin(pitchRadian)
 	apex = Vector3(0.0, 0.0, math.sqrt(coneDistance * coneDistance - pitchRadius * pitchRadius))
@@ -698,7 +698,7 @@ def getHelixComplexPath(derivation, elementNode):
 	if helixTypeFirstCharacter == 'p':
 		helixComplexPath = []
 		x = 0.0
-		xStep = setting.getLayerThickness(elementNode) / derivation.faceWidth
+		xStep = setting.getLayerHeight(elementNode) / derivation.faceWidth
 		justBelowOne = 1.0 - 0.5 * xStep
 		while x < justBelowOne:
 			distanceFromCenter = 0.5 - x

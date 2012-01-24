@@ -33,7 +33,7 @@ When selected, the skirt will be convex, going around the model with only convex
 ===Gap over Perimeter Width===
 Default is three.
 
-Defines the ratio of the gap between the object and the skirt over the perimeter width.  If the ratio is too low, the skirt will connect to the object, if the ratio is too high, the skirt willl not provide much insulation for the object.
+Defines the ratio of the gap between the object and the skirt over the edge width.  If the ratio is too low, the skirt will connect to the object, if the ratio is too high, the skirt willl not provide much insulation for the object.
 
 ===Layers To===
 Default is a one.
@@ -133,8 +133,7 @@ class SkirtRepository:
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skirt')
 		self.activateSkirt = settings.BooleanSetting().getFromValue('Activate Skirt', self, False)
 		self.convex = settings.BooleanSetting().getFromValue('Convex:', self, True)
-		self.gapOverPerimeterWidth = settings.FloatSpin().getFromValue(
-			1.0, 'Gap over Perimeter Width (ratio):', self, 5.0, 3.0)
+		self.gapOverEdgeWidth = settings.FloatSpin().getFromValue(1.0, 'Gap over Perimeter Width (ratio):', self, 5.0, 3.0)
 		self.layersTo = settings.IntSpin().getSingleIncrementFromValue(0, 'Layers To (index):', self, 912345678, 1)
 		self.executeTitle = 'Skirt'
 
@@ -199,9 +198,9 @@ class SkirtSkein:
 
 	def createSkirtLoops(self):
 		'Create the skirt loops.'
-		points = euclidean.getPointsByHorizontalDictionary(self.perimeterWidth, self.unifiedLoop.horizontalDictionary)
-		points += euclidean.getPointsByVerticalDictionary(self.perimeterWidth, self.unifiedLoop.verticalDictionary)
-		loops = triangle_mesh.getDescendingAreaOrientedLoops(points, points, 2.5 * self.perimeterWidth)
+		points = euclidean.getPointsByHorizontalDictionary(self.edgeWidth, self.unifiedLoop.horizontalDictionary)
+		points += euclidean.getPointsByVerticalDictionary(self.edgeWidth, self.unifiedLoop.verticalDictionary)
+		loops = triangle_mesh.getDescendingAreaOrientedLoops(points, points, 2.5 * self.edgeWidth)
 		outerLoops = getOuterLoops(loops)
 		outsetLoops = intercircle.getInsetSeparateLoopsFromLoops(outerLoops, -self.skirtOutset)
 		self.outsetLoops = getOuterLoops(outsetLoops)
@@ -223,7 +222,7 @@ class SkirtSkein:
 	def getHorizontalXIntersectionsTable(self, loop):
 		'Get the horizontal x intersections table from the loop.'
 		horizontalXIntersectionsTable = {}
-		euclidean.addXIntersectionsFromLoopForTable(loop, horizontalXIntersectionsTable, self.perimeterWidth)
+		euclidean.addXIntersectionsFromLoopForTable(loop, horizontalXIntersectionsTable, self.edgeWidth)
 		return horizontalXIntersectionsTable
 
 	def parseBoundaries(self):
@@ -269,9 +268,9 @@ class SkirtSkein:
 			elif firstWord == '(<operatingFlowRate>':
 				self.oldFlowRate = float(splitLine[1])
 				self.skirtFlowRate = self.oldFlowRate
-			elif firstWord == '(<perimeterWidth>':
-				self.perimeterWidth = float(splitLine[1])
-				self.skirtOutset = (self.repository.gapOverPerimeterWidth.value + 0.5) * self.perimeterWidth
+			elif firstWord == '(<edgeWidth>':
+				self.edgeWidth = float(splitLine[1])
+				self.skirtOutset = (self.repository.gapOverEdgeWidth.value + 0.5) * self.edgeWidth
 				self.distanceFeedRate.addTagRoundedLine('skirtOutset', self.skirtOutset)
 			elif firstWord == '(<travelFeedRatePerSecond>':
 				self.travelFeedRateMinute = 60.0 * float(splitLine[1])

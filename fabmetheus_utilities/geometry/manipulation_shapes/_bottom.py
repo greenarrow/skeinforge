@@ -101,4 +101,4 @@ class BottomDerivation:
 
 	def getAdditionalPathLift(self):
 		"Get path lift."
-		return 0.5 * setting.getLayerThickness(self.elementNode) * float(self.liftPath)
+		return 0.5 * setting.getLayerHeight(self.elementNode) * float(self.liftPath)

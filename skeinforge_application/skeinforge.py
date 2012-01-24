@@ -19,7 +19,7 @@ The analyze tool calls plugins in the analyze_plugins folder, which will analyze
 
 The interpret tool accesses and displays the import plugins.
 
-The default settings are similar to those on Nophead's machine.  A setting which is often different is the 'Layer Thickness' in carve.
+The default settings are similar to those on Nophead's machine.  A setting which is often different is the 'Layer Height' in carve.
 
 ===Command Line Interface===
 To bring up the skeinforge dialog without a file name, type:
@@ -234,14 +234,9 @@ import sys
 # wiki document help, description, polyfile
 # subplugins like export static, maybe later mill cut and coil plugins, maybe later still export plugins & change file extension to output file extension  http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge
 #
-# calculate 3D distance if distance > 0.0 then z component = deltaZ/distance then z speed component, limit z speed
 # backup demozendium links
-# contract wipe titles
-# replace layer thickness with layer height, replace baseLayerThickness.. with baseLayerHeightMultiplier, consolidate Object First Layer Flow
-# announce alteration removeRedundantMcode
-# announce chamber gradual bed temperature Bed Temperature Begin Change Height, End Change Height, End Temperature
-# announce comb running jump
-# question, should 'Infill Odd Layer Extra Rotation' be dropped
+# replace replace baseLayerThickness.. with baseLayerHeightMultiplier
+# announce layer thickness with layer height
 #
 # unimportant
 # minor outline problem when an end path goes through a path, like in the letter A
@@ -250,14 +245,16 @@ import sys
 #
 #
 #
+# question, should 'Infill Odd Layer Extra Rotation' be dropped
+# consolidate Object First Layer Flow
+#
 # retraction step leave
 # melt _extrusion
 # think about http://code.google.com/p/skeinarchiver/ and/or undo
 # add volume fraction to fill
 # getStrokeRadius default to edgeWidth
 # look at loop end removed bug in upper loop of layer 8 of Screw_Holder_alteration
-# fix tower perimeter line start problem
-# use fileSettingName to change perimeter width to extrusion width, globalSubstitutionDictionary
+# fix tower edge line start problem
 # check globalExecutionOrder, ensure that bottom order is really high
 # set temperature in temperature
 # maybe rename geometry_plugins xml
@@ -265,7 +262,7 @@ import sys
 # dwindle or dawdle or taper
 # voronoi average location intersection looped inset intercircles
 # skin layers without something over the infill
-# check for last existing then remove unneeded fill code (getLastExistingFillLoops) from euclidean, add fill in penultimate loops, if there is no fill it should not use perimeter - skin should work
+# check for last existing then remove unneeded fill code (getLastExistingFillLoops) from euclidean, add fill in penultimate loops, if there is no fill it should not use edge - skin should work
 # delete commented addInfillPerimeter
 # unpause slow flow rate instead of speeding feed rate
 # maybe in svgReader if loop intersection with previous union else add
@@ -345,7 +342,7 @@ import sys
 # remove cool set at end of layer
 # add fan on when hot in chamber
 # maybe measuring rod
-# getLayerThickness from xml
+# getLayerHeight from xml
 # maybe center for xy plane
 # remove comments from clip, bend
 # winding into coiling, coil into wind & weave
@@ -372,7 +369,7 @@ import sys
 # basic basedit tool
 # arch, ceiling
 # meta setting, rename setting _setting
-# add polish, has perimeter, has cut first layer (False)
+# add polish, has edge, has cut first layer (False)
 # probably not set addedLocation in distanceFeedRate after arc move
 # maybe horizontal bridging and/or check to see if the ends are standing on anything
 # thin self? check when removing intersecting paths in inset
@@ -386,7 +383,7 @@ import sys
 # help primary menu item refresh
 # add plugin help menu, add craft below menu
 # give option of saving when switching profiles
-# xml & svg more forgiving, svg make defaults for layerThickness
+# xml & svg more forgiving, svg make defaults for layerHeight
 # option of surrounding lines in display
 # maybe add connecting line in display line
 # maybe check inset loops to see if they are smaller, but this would be slow

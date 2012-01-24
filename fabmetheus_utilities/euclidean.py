@@ -43,7 +43,7 @@ __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agp
 
 
 globalGoldenAngle = 3.8832220774509332 # (math.sqrt(5.0) - 1.0) * math.pi
-globalGoldenRatio = 1.6180339887498948482045868 # math.sqrt(1.25) - .5
+globalGoldenRatio = 1.6180339887498948482045868 # math.sqrt(1.25) + 0.5
 globalTau = math.pi + math.pi # http://tauday.com/
 
 
@@ -2223,6 +2223,7 @@ class NestedBand(NestedRing):
 	def __init__(self):
 		'Initialize.'
 		NestedRing.__init__(self)
+		self.edgePaths = []
 		self.extraLoops = []
 		self.infillBoundaries = []
 		self.infillPaths = []
@@ -2230,7 +2231,6 @@ class NestedBand(NestedRing):
 		self.lastFillLoops = None
 		self.loop = None
 		self.penultimateFillLoops = []
-		self.perimeterPaths = []
 		self.z = None
 
 	def __repr__(self):
@@ -2241,19 +2241,19 @@ class NestedBand(NestedRing):
 		stringRepresentation += 'infillPaths\n'
 		for infillPath in self.infillPaths:
 			stringRepresentation += 'infillPath\n%s\n' % infillPath
-		stringRepresentation += 'perimeterPaths\n'
-		for perimeterPath in self.perimeterPaths:
-			stringRepresentation += 'perimeterPath\n%s\n' % perimeterPath
+		stringRepresentation += 'edgePaths\n'
+		for edgePath in self.edgePaths:
+			stringRepresentation += 'edgePath\n%s\n' % edgePath
 		return stringRepresentation + '\n'
 
 	def addPerimeterInner(self, extrusionHalfWidth, oldOrderedLocation, skein, threadSequence):
-		'Add to the perimeter and the inner island.'
+		'Add to the edge and the inner island.'
 		if self.loop == None:
-			skein.distanceFeedRate.addLine('(<perimeterPath>)')
-			transferClosestPaths(oldOrderedLocation, self.perimeterPaths[:], skein)
-			skein.distanceFeedRate.addLine('(</perimeterPath>)')
+			skein.distanceFeedRate.addLine('(<edgePath>)')
+			transferClosestPaths(oldOrderedLocation, self.edgePaths[:], skein)
+			skein.distanceFeedRate.addLine('(</edgePath>)')
 		else:
-			addToThreadsFromLoop(extrusionHalfWidth, 'perimeter', self.loop[:], oldOrderedLocation, skein)
+			addToThreadsFromLoop(extrusionHalfWidth, 'edge', self.loop[:], oldOrderedLocation, skein)
 		skein.distanceFeedRate.addLine('(</boundaryPerimeter>)')
 		addToThreadsRemove(extrusionHalfWidth, self.innerNestedRings[:], oldOrderedLocation, skein, threadSequence)
 
@@ -2270,10 +2270,10 @@ class NestedBand(NestedRing):
 		self.z = vector3.z
 
 	def addToThreads(self, extrusionHalfWidth, oldOrderedLocation, skein, threadSequence):
-		'Add to paths from the last location. perimeter>inner >fill>paths or fill> perimeter>inner >paths'
+		'Add to paths from the last location.'
 		addNestedRingBeginning(skein.distanceFeedRate, self.boundary, self.z)
 		threadFunctionDictionary = {
-			'infill' : self.transferInfillPaths, 'loops' : self.transferClosestFillLoops, 'perimeter' : self.addPerimeterInner}
+			'infill' : self.transferInfillPaths, 'loops' : self.transferClosestFillLoops, 'edge' : self.addPerimeterInner}
 		for threadType in threadSequence:
 			threadFunctionDictionary[threadType](extrusionHalfWidth, oldOrderedLocation, skein, threadSequence)
 		skein.distanceFeedRate.addLine('(</nestedRing>)')

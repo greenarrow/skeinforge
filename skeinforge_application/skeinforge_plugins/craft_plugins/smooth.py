@@ -16,7 +16,7 @@ The default 'Activate Smooth' checkbox is off.  When it is on, the functions des
 ===Layers From===
 Default: 1
 
-Defines which layer of the print the smoothing process starts from.  If this is set this to zero, that might cause the smoothed parts of the bottom perimeter not to adhere well to the print surface.  However, this is just a potential problem in theory, no bottom adhesion problem has been reported. 
+Defines which layer of the print the smoothing process starts from.  If this is set this to zero, that might cause the smoothed parts of the bottom edge not to adhere well to the print surface.  However, this is just a potential problem in theory, no bottom adhesion problem has been reported. 
 
 ===Maximum Shortening over Width===
 Default: 1.2

@@ -31,7 +31,20 @@ __license__ = 'GNU Affero General Public License http://www.gnu.org/licenses/agp
 
 globalRepositoryDialogListTable = {}
 globalProfileSaveListenerListTable = {}
-globalCloseListTables = [ globalRepositoryDialogListTable, globalProfileSaveListenerListTable ]
+globalCloseListTables = [globalRepositoryDialogListTable, globalProfileSaveListenerListTable]
+globalSettingReplacements = {
+	'Perimeter Width over Thickness (ratio):' : 'Edge Width over Height (ratio):',
+	'Layer Thickness (mm):' : 'Layer Height (mm):',
+	'Location Arrival X (mm):' : 'Arrival X (mm):',
+	'Location Arrival Y (mm):' : 'Arrival Y (mm):',
+	'Location Arrival Z (mm):' : 'Arrival Z (mm):',
+	'Location Departure X (mm):' : 'Departure X (mm):',
+	'Location Departure Y (mm):' : 'Departure Y (mm):',
+	'Location Departure Z (mm):' : 'Departure Z (mm):',
+	'Location Wipe X (mm):' : 'Wipe X (mm):',
+	'Location Wipe Y (mm):' : 'Wipe Y (mm):',
+	'Location Wipe Z (mm):' : 'Wipe Z (mm):'
+	}
 globalSpreadsheetSeparator = '\t'
 globalTemporaryOverrides = {}
 
@@ -67,6 +80,7 @@ def addListsToRepositoryByFunction(fileNameHelp, getProfileDirectory, repository
 	repository.lowerName = fileNameHelp.split('.')[-2]
 	repository.baseName = repository.lowerName + '.csv'
 	repository.baseNameSynonym = None
+	repository.baseNameSynonymDictionary = None
 	repository.capitalizedName = getEachWordCapitalized( repository.lowerName )
 	repository.getProfileDirectory = getProfileDirectory
 	repository.openLocalHelpPage = HelpPage().getOpenFromDocumentationSubName( repository.fileNameHelp )
@@ -253,15 +267,7 @@ def getPathInFabmetheusFromFileNameHelp( fileNameHelp ):
 
 def getProfileBaseName(repository):
 	"Get the profile base file name."
-	if repository.getProfileDirectory == None:
-		return repository.baseName
-	return os.path.join(repository.getProfileDirectory(), repository.baseName)
-
-def getProfileBaseNameSynonym(repository):
-	"Get the profile base file name synonym."
-	if repository.getProfileDirectory == None:
-		return repository.baseNameSynonym
-	return os.path.join(repository.getProfileDirectory(), repository.baseNameSynonym)
+	return getProfileName(repository.baseName, repository)
 
 def getProfilesDirectoryInAboveDirectory(subName=''):
 	"Get the profiles directory path in the above directory."
@@ -269,6 +275,12 @@ def getProfilesDirectoryInAboveDirectory(subName=''):
 	if subName == '':
 		return aboveProfilesDirectory
 	return os.path.join( aboveProfilesDirectory, subName )
+
+def getProfileName(name, repository):
+	"Get the name, joined with the profile directory if there is one."
+	if repository.getProfileDirectory == None:
+		return name
+	return os.path.join(repository.getProfileDirectory(), name)
 
 def getRadioPluginsAddPluginFrame( directoryPath, importantFileNames, names, repository ):
 	"Get the radio plugins and add the plugin frame."
@@ -287,7 +299,7 @@ def getReadRepository(repository):
 	text = archive.getFileText(archive.getProfilesPath(getProfileBaseName(repository)), False)
 	if text == '':
 		if repository.baseNameSynonym != None:
-			text = archive.getFileText(archive.getProfilesPath(getProfileBaseNameSynonym(repository)), False)
+			text = archive.getFileText(archive.getProfilesPath(getProfileName(repository.baseNameSynonym, repository)), False)
 	if text == '':
 		print('The default %s will be written in the .skeinforge folder in the home directory.' % repository.title.lower() )
 		text = archive.getFileText(getProfilesDirectoryInAboveDirectory(getProfileBaseName(repository)), False)
@@ -470,6 +482,21 @@ def readSettingsFromText(repository, text):
 	shortDictionary = {}
 	for setting in repository.preferences:
 		shortDictionary[getShortestUniqueSettingName(setting.name, repository.preferences)] = setting
+	if repository.baseNameSynonymDictionary != None:
+		synonymDictionaryCopy = repository.baseNameSynonymDictionary.copy()
+		for line in lines:
+			splitLine = line.split(globalSpreadsheetSeparator)
+			if len(splitLine) > 1:
+				if splitLine[0] in synonymDictionaryCopy:
+					del synonymDictionaryCopy[splitLine[0]]
+		for synonymDictionaryCopyKey in synonymDictionaryCopy.keys():
+			text = archive.getFileText(archive.getProfilesPath(getProfileName(synonymDictionaryCopy[synonymDictionaryCopyKey], repository)), False)
+			synonymLines = archive.getTextLines(text)
+			for synonymLine in synonymLines:
+				splitLine = synonymLine.split(globalSpreadsheetSeparator)
+				if len(splitLine) > 1:
+					if splitLine[0] == synonymDictionaryCopyKey:
+						lines.append(synonymLine)
 	for lineIndex in xrange(len(lines)):
 		setRepositoryToLine(lineIndex, lines, shortDictionary)
 
@@ -520,12 +547,14 @@ def setIntegerValueToString( integerSetting, valueString ):
 		integerSetting.value = 1
 
 def setRepositoryToLine(lineIndex, lines, shortDictionary):
-	"Set setting dictionary to a setting line."
+	"Set setting dictionary to a setting line.globalSettingReplacements"
 	line = lines[lineIndex]
 	splitLine = line.split(globalSpreadsheetSeparator)
 	if len(splitLine) < 2:
 		return
 	fileSettingName = splitLine[0]
+	if fileSettingName in globalSettingReplacements:
+		fileSettingName = globalSettingReplacements[fileSettingName]
 	shortDictionaryKeys = shortDictionary.keys()
 	shortDictionaryKeys.sort(key=len, reverse=True) # so that a short word like fill is not overidden by a longer word like fillet
 	for shortDictionaryKey in shortDictionaryKeys:

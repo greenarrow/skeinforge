@@ -143,6 +143,7 @@ class TowerSkein:
 		self.afterExtrusionLines = []
 		self.beforeExtrusionLines = []
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
+		self.edgeWidth = 0.6
 		self.highestZ = - 987654321.0
 		self.island = None
 		self.layerIndex = 0
@@ -152,7 +153,6 @@ class TowerSkein:
 		self.oldLayerIndex = None
 		self.oldLocation = None
 		self.oldOrderedLocation = Vector3()
-		self.perimeterWidth = 0.6
 		self.shutdownLineIndex = sys.maxint
 		self.nestedRingCount = 0
 		self.threadLayer = None
@@ -198,7 +198,7 @@ class TowerSkein:
 
 	def climbTower( self, removedIsland ):
 		"Climb up the island to any islands directly above."
-		outsetDistance = 1.5 * self.perimeterWidth
+		outsetDistance = 1.5 * self.edgeWidth
 		for step in xrange( self.towerRepository.maximumTowerHeight.value ):
 			aboveIndex = self.oldLayerIndex + 1
 			if aboveIndex >= len( self.threadLayers ):
@@ -284,7 +284,7 @@ class TowerSkein:
 		coneAngleTangent = math.tan( math.radians( self.towerRepository.extruderPossibleCollisionConeAngle.value ) )
 		for layerIndex in xrange( bottomLayerIndex, untilLayerIndex ):
 			islands = self.threadLayers[layerIndex].islands
-			outsetDistance = self.perimeterWidth * ( untilLayerIndex - layerIndex ) * coneAngleTangent + 0.5 * self.perimeterWidth
+			outsetDistance = self.edgeWidth * ( untilLayerIndex - layerIndex ) * coneAngleTangent + 0.5 * self.edgeWidth
 			for belowIsland in self.threadLayers[layerIndex].islands:
 				outsetIslandLoop = belowIsland.boundingLoop.getOutsetBoundingLoop( outsetDistance )
 				if island.boundingLoop.isOverlappingAnother( outsetIslandLoop ):
@@ -314,10 +314,10 @@ class TowerSkein:
 				self.distanceFeedRate.addTagBracketedProcedure('tower')
 			elif firstWord == '(<layer>':
 				return
-			elif firstWord == '(<layerThickness>':
+			elif firstWord == '(<layerHeight>':
 				self.minimumBelow = 0.1 * float(splitLine[1])
-			elif firstWord == '(<perimeterWidth>':
-				self.perimeterWidth = float(splitLine[1])
+			elif firstWord == '(<edgeWidth>':
+				self.edgeWidth = float(splitLine[1])
 			elif firstWord == '(<travelFeedRatePerSecond>':
 				self.travelFeedRateMinute = 60.0 * float(splitLine[1])
 			self.distanceFeedRate.addLine(line)
@@ -356,7 +356,7 @@ class TowerSkein:
 				self.island = Island()
 				self.addThreadLayerIfNone()
 				self.threadLayer.islands.append( self.island )
-		elif firstWord == '(</perimeter>)':
+		elif firstWord == '(</edge>)':
 			self.afterExtrusionLines = []
 		if self.island != None:
 			self.island.lines.append(line)

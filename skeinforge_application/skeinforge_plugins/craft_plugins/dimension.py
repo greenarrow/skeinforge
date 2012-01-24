@@ -77,7 +77,7 @@ Default is zero.
 
 Defines the restart extra distance when the thread restarts.  The restart distance will be the retraction distance plus the restart extra distance.
 
-If this is greater than zero when the extruder starts this distance is added to the retract value giving extra filament.  It can be a negative value in which case it is subtracted from the retraction distance.  On some Repstrap machines a negative value can stop the build up of plastic that can occur at the start of perimeters.
+If this is greater than zero when the extruder starts this distance is added to the retract value giving extra filament.  It can be a negative value in which case it is subtracted from the retraction distance.  On some Repstrap machines a negative value can stop the build up of plastic that can occur at the start of edges.
 
 ==Examples==
 The following examples dimension the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and dimension.py.
@@ -210,7 +210,7 @@ class DimensionSkein:
 		self.parseInitialization()
 		if not self.repository.retractWithinIsland.value:
 			self.parseBoundaries()
-		self.flowScaleSixty = 60.0 * self.layerThickness * self.perimeterWidth / filamentPackingArea
+		self.flowScaleSixty = 60.0 * self.layerHeight * self.edgeWidth / filamentPackingArea
 		if self.operatingFlowRate == None:
 			print('There is no operatingFlowRate so dimension will do nothing.')
 			return gcodeText
@@ -347,8 +347,8 @@ class DimensionSkein:
 			if firstWord == '(</extruderInitialization>)':
 				self.distanceFeedRate.addTagBracketedProcedure('dimension')
 				return
-			elif firstWord == '(<layerThickness>':
-				self.layerThickness = float(splitLine[1])
+			elif firstWord == '(<layerHeight>':
+				self.layerHeight = float(splitLine[1])
 			elif firstWord == '(<maximumZDrillFeedRatePerSecond>':
 				self.maximumZFeedRatePerSecond = float(splitLine[1])
 			elif firstWord == '(<maximumZFeedRatePerSecond>':
@@ -358,8 +358,8 @@ class DimensionSkein:
 			elif firstWord == '(<operatingFlowRate>':
 				self.operatingFlowRate = float(splitLine[1])
 				self.flowRate = self.operatingFlowRate
-			elif firstWord == '(<perimeterWidth>':
-				self.perimeterWidth = float(splitLine[1])
+			elif firstWord == '(<edgeWidth>':
+				self.edgeWidth = float(splitLine[1])
 			elif firstWord == '(<travelFeedRatePerSecond>':
 				self.travelFeedRatePerSecond = float(splitLine[1])
 			self.distanceFeedRate.addLine(line)

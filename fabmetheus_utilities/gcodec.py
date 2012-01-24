@@ -349,15 +349,15 @@ class DistanceFeedRate:
 		self.addLine(firstWord + ' S' + euclidean.getRoundedToThreePlaces(parameter))
 
 	def addPerimeterBlock(self, loop, z):
-		'Add the perimeter gcode block for the loop.'
+		'Add the edge gcode block for the loop.'
 		if len(loop) < 2:
 			return
-		if euclidean.isWiddershins(loop): # Indicate that a perimeter is beginning.
-			self.addLine('(<perimeter> outer )')
+		if euclidean.isWiddershins(loop): # Indicate that an edge is beginning.
+			self.addLine('(<edge> outer )')
 		else:
-			self.addLine('(<perimeter> inner )')
+			self.addLine('(<edge> inner )')
 		self.addGcodeFromThreadZ(loop + [loop[0]], z)
-		self.addLine('(</perimeter>)') # Indicate that a perimeter is beginning.
+		self.addLine('(</edge>)') # Indicate that an edge is beginning.
 
 	def addTagBracketedLine(self, tagName, value):
 		'Add a begin tag, value and end tag.'

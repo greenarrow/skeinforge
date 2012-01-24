@@ -82,4 +82,4 @@ class InsetDerivation:
 	"Class to hold inset variables."
 	def __init__(self, elementNode, prefix):
 		'Set defaults.'
-		self.radius = evaluate.getEvaluatedFloat(2.0 * setting.getPerimeterWidth(elementNode), elementNode, prefix + 'radius')
+		self.radius = evaluate.getEvaluatedFloat(2.0 * setting.getEdgeWidth(elementNode), elementNode, prefix + 'radius')
