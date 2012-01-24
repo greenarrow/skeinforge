@@ -182,7 +182,7 @@ def getDescriptiveExtension(gcodeText):
 	return '.' + getDescriptionCarve(lines) + getDescriptionFill(lines) + getDescriptionMultiply(lines) + getDescriptionSpeed(lines)
 
 def getDistanceGcode(exportText):
-	'Get gcode lines with distance variable added.'
+	'Get gcode lines with distance variable added, this is for if ever there is distance code.'
 	lines = archive.getTextLines(exportText)
 	oldLocation = None
 	for line in lines:
@@ -194,7 +194,6 @@ def getDistanceGcode(exportText):
 			location = gcodec.getLocationFromSplitLine(oldLocation, splitLine)
 			if oldLocation != None:
 				distance = location.distance(oldLocation)
-				print( distance )
 			oldLocation = location
 	return exportText
 

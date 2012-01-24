@@ -42,7 +42,7 @@ def getEmptyZLoops(archivableObjects, importRadius, shouldPrintWarning, z, zoneA
 		loops = boolean_solid.getLoopsUnion(importRadius, visibleObjectLoopsList)
 		if shouldPrintWarning:
 			print('Warning, the triangle mesh slice intersects itself in getExtruderPaths in boolean_geometry.')
-			print( 'Something will still be printed, but there is no guarantee that it will be the correct shape.' )
+			print('Something will still be printed, but there is no guarantee that it will be the correct shape.')
 			print('Once the gcode is saved, you should check over the layer with a z of:')
 			print(z)
 	return loops

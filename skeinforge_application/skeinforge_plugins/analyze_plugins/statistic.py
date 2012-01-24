@@ -138,7 +138,7 @@ def getWindowAnalyzeFileGivenText( fileName, gcodeText, repository=None):
 	skein = StatisticSkein()
 	statisticGcode = skein.getCraftedGcode(gcodeText, repository)
 	if repository.printStatistics.value:
-		print( statisticGcode )
+		print(statisticGcode)
 	if repository.saveStatistics.value:
 		archive.writeFileMessageEnd('.txt', fileName, statisticGcode, 'The statistics file is saved as ')
 

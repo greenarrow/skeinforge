@@ -216,16 +216,12 @@ def addAroundGridPoint( arounds, gridPoint, gridPointInsetX, gridPointInsetY, gr
 			yIntersection = euclidean.getYIntersectionIfExists( pointFirst, pointSecond, gridPoint.real )
 			addYIntersectionPathToList( aroundIndex, pointIndex, gridPoint.imag, yIntersection, aroundIntersectionPaths )
 	if len( aroundIntersectionPaths ) < 2:
-		print('This should never happen, aroundIntersectionPaths is less than 2 in fill.')
-		print( aroundIntersectionPaths )
-		print( gridPoint )
+		print('Warning, aroundIntersectionPaths is less than 2 in fill.')
+		print(aroundIntersectionPaths)
+		print(gridPoint)
 		return
-	yCloseToCenterArounds = getClosestOppositeIntersectionPaths( aroundIntersectionPaths )
-	if len( yCloseToCenterArounds ) < 2:
-#		This used to be worth the warning below.
-#		print('This should never happen, yCloseToCenterArounds is less than 2 in fill.')
-#		print( gridPoint )
-#		print( len( yCloseToCenterArounds ) )
+	yCloseToCenterArounds = getClosestOppositeIntersectionPaths(aroundIntersectionPaths)
+	if len(yCloseToCenterArounds) < 2:
 		return
 	segmentFirstY = min( yCloseToCenterArounds[0].y, yCloseToCenterArounds[1].y )
 	segmentSecondY = max( yCloseToCenterArounds[0].y, yCloseToCenterArounds[1].y )
@@ -874,6 +870,7 @@ class FillSkein:
 				extraShells = self.repository.extraShellsBase.value
 		if rotatedLayer.rotation != None:
 			extraShells = 0
+			self.distanceFeedRate.addLine('(<bridgeRotation> %s )' % layerRotation)
 		self.distanceFeedRate.addLine('(<rotation> %s )' % layerRotation)
 		aroundWidth = 0.34321 * self.infillWidth
 		doubleInfillWidth = 2.0 * self.infillWidth

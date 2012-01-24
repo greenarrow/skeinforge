@@ -234,6 +234,7 @@ import sys
 # wiki document help, description, polyfile
 # subplugins like export static, maybe later mill cut and coil plugins, maybe later still export plugins & change file extension to output file extension  http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge
 #
+# calculate 3D distance if distance > 0.0 then z component = deltaZ/distance then z speed component, limit z speed
 # backup demozendium links
 # contract wipe titles
 # replace layer thickness with layer height, replace baseLayerThickness.. with baseLayerHeightMultiplier, consolidate Object First Layer Flow

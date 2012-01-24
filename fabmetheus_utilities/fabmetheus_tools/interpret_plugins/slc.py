@@ -160,7 +160,7 @@ class SLCCarving:
 		"Read in the sampling table section. It contains a table length (byte) and the table entries."
 		tableEntrySize = ord( file.read( 1 ) )
 		if tableEntrySize == 0:
-			print( "Sampling table size is zero!" )
+			print("Sampling table size is zero!")
 			exit()
 		for index in xrange( tableEntrySize ):
 			sampleTableEntry = SampleTableEntry( file )

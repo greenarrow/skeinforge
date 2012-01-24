@@ -37,8 +37,8 @@ def addCircleIntersectionLoop(circleIntersectionLoop, circleIntersections):
 			return
 		circleIntersectionAhead.addToList(circleIntersectionLoop)
 	firstCircleIntersection.steppedOn = True
-	print( 'addCircleIntersectionLoop would have gone into an endless loop, this should never happen.' )
-	print( 'circleIntersectionLoop' )
+	print('Warning, addCircleIntersectionLoop would have gone into an endless loop.')
+	print('circleIntersectionLoop')
 	for circleIntersection in circleIntersectionLoop:
 		print(circleIntersection)
 		print(circleIntersection.circleNodeAhead)
@@ -141,10 +141,10 @@ def addPointsFromSegment( pointBegin, pointEnd, points, radius, thresholdRatio=0
 	if extraCircles < 1:
 		return
 	if segmentLength == 0.0:
-		print('This should never happen, segmentLength = 0.0 in intercircle.')
+		print('Warning, segmentLength = 0.0 in intercircle.')
 		print('pointBegin')
-		print( pointBegin )
-		print( pointEnd )
+		print(pointBegin)
+		print(pointEnd)
 		return
 	if extraCircles < 2:
 		lengthIncrement = segmentLength / ( float(extraCircles) + 1.0 )
@@ -645,9 +645,9 @@ class CircleIntersection:
 		rotatedClockwiseQuarter = complex( self.aheadMinusBehind.imag, - self.aheadMinusBehind.real )
 		rotatedClockwiseQuarterLength = abs( rotatedClockwiseQuarter )
 		if rotatedClockwiseQuarterLength == 0:
-			print('this should never happen, rotatedClockwiseQuarter in getDemichord in intercircle is 0')
-			print( circleNodeAhead.dividedPoint )
-			print( circleNodeBehind.dividedPoint )
+			print('Warning, rotatedClockwiseQuarter in getDemichord in intercircle is 0')
+			print(circleNodeAhead.dividedPoint)
+			print(circleNodeBehind.dividedPoint)
 			self.demichord = 0.0
 		else:
 			self.demichord = rotatedClockwiseQuarter * demichordWidth / rotatedClockwiseQuarterLength

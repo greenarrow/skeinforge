@@ -339,7 +339,7 @@ def getSelectedRadioPlugin( names, radioPlugins ):
 				radioPlugin.value = True
 				return radioPlugin
 	print('this should never happen, no getSelectedRadioPlugin in settings')
-	print( names )
+	print(names)
 	return radioPlugin[0]
 
 def getShortestUniqueSettingName(settingName, settings):
@@ -430,7 +430,7 @@ def openWebPage( webPagePath ):
 		except:
 			pass
 		print('Skeinforge was not able to open the file in a web browser.  To see the documentation, open the following file in a web browser:')
-		print( webPagePath )
+		print(webPagePath)
 		return
 	else:
 		os.system(webbrowserName + ' ' + webPagePath)#used this instead of webbrowser.open() to workaround webbrowser open() bug
@@ -610,7 +610,7 @@ def writeSettings(repository):
 def writeSettingsPrintMessage(repository):
 	"Set the settings to the dialog then write them."
 	writeSettings(repository)
-	print( repository.title.lower().capitalize() + ' have been saved.')
+	print(repository.title.lower().capitalize() + ' have been saved.')
 
 def writeValueListToRepositoryWriter( repositoryWriter, setting ):
 	"Write tab separated name and list to the repository writer."
@@ -1432,7 +1432,7 @@ class MenuButtonDisplay:
 		"Add this to the repository menu."
 		if len( self.menuRadios ) < 1:
 			print('The MenuButtonDisplay in settings should have menu items.')
-			print( self.name )
+			print(self.name)
 			return
 		self.menu = Tkinter.Menu( repositoryMenu, tearoff = 0 )
 		repositoryMenu.add_cascade( label = getTitleFromName( self.name ), menu = self.menu )

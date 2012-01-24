@@ -16,7 +16,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 >>> file.close()
 >>> from xml_simple_reader import DocumentNode
 >>> xmlParser = DocumentNode(fileName, xmlText)
->>> print( xmlParser )
+>>> print(xmlParser)
   ?xml, {'version': '1.0'}
   ArtOfIllusion, {'xmlns:bf': '//babelfiche/codec', 'version': '2.0', 'fileversion': '3'}
   Scene, {'bf:id': 'theScene'}

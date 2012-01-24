@@ -163,9 +163,9 @@ class CoilSkein:
 			firstLocation = thread[0]
 			self.distanceFeedRate.addGcodeMovementZ( firstLocation.dropAxis(), firstLocation.z )
 		else:
-			print( "zero length vertex positions array which was skipped over, this should never happen" )
+			print("zero length vertex positions array which was skipped over, this should never happen")
 		if len(thread) < 2:
-			print( "thread of only one point in addGcodeFromThread in coil, this should never happen" )
+			print("thread of only one point in addGcodeFromThread in coil, this should never happen")
 			print(thread)
 			return
 		self.distanceFeedRate.addLine('M101') # Turn extruder on.

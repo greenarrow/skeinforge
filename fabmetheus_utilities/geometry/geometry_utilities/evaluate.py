@@ -922,13 +922,13 @@ def setFunctionLocalDictionary(arguments, function):
 				print(strippedWord)
 				print(parameterWords)
 				print(arguments)
-				print( function.elementNode.attributes )
+				print(function.elementNode.attributes)
 			else:
 				strippedValue = strippedValue.strip()
 			function.localDictionary[keyValue.key.strip()] = strippedValue
 	if len(arguments) > len(parameterWords):
 		print('Warning there are too many initializeFunction parameters for:')
-		print( function.elementNode.attributes )
+		print(function.elementNode.attributes)
 		print(parameterWords)
 		print(arguments)
 
@@ -1275,7 +1275,7 @@ class EvaluatorSubtraction(EvaluatorAddition):
 		rightValue = evaluators[rightIndex].value
 		if rightValue == None:
 			print('Warning, can not minus.')
-			print( evaluators[rightIndex].word )
+			print(evaluators[rightIndex].word)
 		else:
 			evaluators[rightIndex].value = self.getNegativeValue(rightValue)
 		del evaluators[evaluatorIndex]

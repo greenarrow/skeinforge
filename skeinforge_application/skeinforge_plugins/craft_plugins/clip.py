@@ -125,9 +125,9 @@ class ClipSkein:
 		if len(thread) > 0:
 			self.distanceFeedRate.addGcodeMovementZWithFeedRate( self.travelFeedRateMinute, thread[0], z )
 		else:
-			print( "zero length vertex positions array which was skipped over, this should never happen" )
+			print("zero length vertex positions array which was skipped over, this should never happen")
 		if len(thread) < 2:
-			print( "thread of only one point in clip, this should never happen" )
+			print("thread of only one point in clip, this should never happen")
 			print(thread)
 			return
 		self.distanceFeedRate.addLine('M101')

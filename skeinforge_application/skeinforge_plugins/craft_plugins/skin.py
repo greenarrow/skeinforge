@@ -201,10 +201,27 @@ class SkinSkein:
 					endpoints.append(endpoint)
 		infillPaths = euclidean.getPathsFromEndpoints(endpoints, 5.0 * self.skinInfillWidth, pixelTable, aroundWidth)
 		for infillPath in infillPaths:
+			addPointBeforeThread = True
 			infillRotated = euclidean.getRotatedComplexes(self.rotation, infillPath)
 			if upperZ > z and self.repository.hopWhenExtrudingInfill.value:
-				self.distanceFeedRate.addGcodeMovementZWithFeedRate(self.maximumZFeedRateMinute, infillRotated[0], upperZ)
-			self.distanceFeedRate.addGcodeFromFeedRateThreadZ(self.feedRateMinute, infillRotated, self.travelFeedRateMinute, z)
+				feedRateMinute = self.travelFeedRateMinute
+				infillRotatedFirst = infillRotated[0]
+				location = Vector3(infillRotatedFirst.real, infillRotatedFirst.imag, upperZ)
+				distance = abs(location - self.oldLocation)
+				if distance > 0.0:
+					deltaZ = abs(upperZ - self.oldLocation.z)
+					zFeedRateComponent = feedRateMinute * deltaZ / distance
+					if zFeedRateComponent > self.maximumZFeedRateMinute:
+						feedRateMinute *= self.maximumZFeedRateMinute / zFeedRateComponent
+				self.distanceFeedRate.addGcodeMovementZWithFeedRate(feedRateMinute, infillRotatedFirst, upperZ)
+				self.distanceFeedRate.addGcodeMovementZWithFeedRate(self.maximumZFeedRateMinute, infillRotatedFirst, z)
+				addPointBeforeThread = False
+			if addPointBeforeThread:
+				self.distanceFeedRate.addGcodeMovementZ(infillRotated[0], z)
+			self.distanceFeedRate.addLine('M101')
+			for point in infillRotated[1 :]:
+				self.distanceFeedRate.addGcodeMovementZ(point, z)
+			self.distanceFeedRate.addLine('M103')
 			lastPointRotated = infillRotated[-1]
 			self.oldLocation = Vector3(lastPointRotated.real, lastPointRotated.imag, upperZ)
 			if upperZ > z and self.repository.hopWhenExtrudingInfill.value:
@@ -326,12 +343,11 @@ class SkinSkein:
 		firstWord = splitLine[0]
 		if firstWord == 'G1':
 			self.feedRateMinute = gcodec.getFeedRateMinute(self.feedRateMinute, splitLine)
-			location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
-			self.oldLocation = location
+			self.oldLocation = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 			if self.infillBoundaries != None:
 				return
 			if self.perimeter != None:
-				self.perimeter.append(location.dropAxis())
+				self.perimeter.append(self.oldLocation.dropAxis())
 				return
 		elif firstWord == '(<infill>)':
 			if self.layerIndex >= self.layersFromBottom and self.layerIndex == self.layerIndexTop:

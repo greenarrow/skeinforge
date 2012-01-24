@@ -111,8 +111,8 @@ class LimitSkein:
 		self.repository = repository
 		self.lines = archive.getTextLines(gcodeText)
 		self.parseInitialization()
-		self.maximumZDrillFeedRatePerSecond = min(self.maximumZDrillFeedRatePerSecond, self.maximumZTravelFeedRatePerSecond)
-		self.maximumZFeedRatePerSecond = self.maximumZTravelFeedRatePerSecond
+		self.maximumZDrillFeedRatePerSecond = min(self.maximumZDrillFeedRatePerSecond, self.maximumZFeedRatePerSecond)
+		self.maximumZCurrentFeedRatePerSecond = self.maximumZFeedRatePerSecond
 		for lineIndex in xrange(self.lineIndex, len(self.lines)):
 			self.parseLine( lineIndex )
 		return self.distanceFeedRate.output.getvalue()
@@ -126,9 +126,9 @@ class LimitSkein:
 	def getZLimitedLine(self, deltaZ, distance, line, splitLine):
 		'Get a replaced z limited gcode movement line.'
 		zFeedRateSecond = self.feedRateMinute * deltaZ / distance / 60.0
-		if zFeedRateSecond <= self.maximumZFeedRatePerSecond:
+		if zFeedRateSecond <= self.maximumZCurrentFeedRatePerSecond:
 			return line
-		limitedFeedRateMinute = self.feedRateMinute * self.maximumZFeedRatePerSecond / zFeedRateSecond
+		limitedFeedRateMinute = self.feedRateMinute * self.maximumZCurrentFeedRatePerSecond / zFeedRateSecond
 		return self.distanceFeedRate.getLineWithFeedRate(limitedFeedRateMinute, line, splitLine)
 
 	def getZLimitedLineArc(self, line, splitLine):
@@ -165,8 +165,8 @@ class LimitSkein:
 				return
 			elif firstWord == '(<maximumZDrillFeedRatePerSecond>':
 				self.maximumZDrillFeedRatePerSecond = float(splitLine[1])
-			elif firstWord == '(<maximumZTravelFeedRatePerSecond>':
-				self.maximumZTravelFeedRatePerSecond = float(splitLine[1])
+			elif firstWord == '(<maximumZFeedRatePerSecond>':
+				self.maximumZFeedRatePerSecond = float(splitLine[1])
 			self.distanceFeedRate.addLine(line)
 
 	def parseLine( self, lineIndex ):
@@ -184,9 +184,9 @@ class LimitSkein:
 		elif firstWord == 'G2' or firstWord == 'G3':
 			line = self.getZLimitedLineArc(line, splitLine)
 		elif firstWord == 'M101':
-			self.maximumZFeedRatePerSecond = self.maximumZDrillFeedRatePerSecond
+			self.maximumZCurrentFeedRatePerSecond = self.maximumZDrillFeedRatePerSecond
 		elif firstWord == 'M103':
-			self.maximumZFeedRatePerSecond = self.maximumZTravelFeedRatePerSecond
+			self.maximumZCurrentFeedRatePerSecond = self.maximumZFeedRatePerSecond
 		self.distanceFeedRate.addLine(line)
 
 

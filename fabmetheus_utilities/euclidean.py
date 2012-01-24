@@ -169,12 +169,12 @@ def addSegmentToPixelTable( beginComplex, endComplex, pixelDictionary, shortenDi
 		gradient = deltaY / deltaX
 	else:
 		gradient = 0.0
-		print('This should never happen, deltaX in addSegmentToPixelTable in euclidean is 0.')
-		print( beginComplex )
-		print( endComplex )
-		print( shortenDistanceBegin )
-		print( shortenDistanceEnd )
-		print( width )
+		print('Warning, deltaX in addSegmentToPixelTable in euclidean is 0.')
+		print(beginComplex)
+		print(endComplex)
+		print(shortenDistanceBegin)
+		print(shortenDistanceEnd)
+		print(width)
 	xBegin = int(round(beginComplex.real))
 	xEnd = int(round(endComplex.real))
 	yIntersection = beginComplex.imag - beginComplex.real * gradient
@@ -240,11 +240,11 @@ def addValueSegmentToPixelTable( beginComplex, endComplex, pixelDictionary, valu
 		gradient = deltaY / deltaX
 	else:
 		gradient = 0.0
-		print('This should never happen, deltaX in addValueSegmentToPixelTable in euclidean is 0.')
-		print( beginComplex )
+		print('Warning, deltaX in addValueSegmentToPixelTable in euclidean is 0.')
+		print(beginComplex)
 		print(value)
-		print( endComplex )
-		print( width )
+		print(endComplex)
+		print(width)
 	xBegin = int(round(beginComplex.real))
 	xEnd = int(round(endComplex.real))
 	yIntersection = beginComplex.imag - beginComplex.real * gradient
@@ -2111,9 +2111,6 @@ class Endpoint:
 			endpoint.segment = endpoint.point - self.point
 			endpoint.segmentLength = abs(endpoint.segment)
 			if endpoint.segmentLength <= 0.0:
-#				print('This should never happen, the endpoints are touching')
-#				print( endpoint )
-#				print(path)
 				return endpoint
 		endpoints.sort(compareSegmentLength)
 		for endpoint in endpoints[: 15]: # increasing the number of searched endpoints increases the search time, with 20 fill took 600 seconds for cilinder.gts, with 10 fill took 533 seconds
@@ -2150,9 +2147,6 @@ class Endpoint:
 			endpoint.segment = endpoint.point - self.point
 			endpoint.segmentLength = abs(endpoint.segment)
 			if endpoint.segmentLength <= 0.0:
-#				print('This should never happen, the endpoints are touching')
-#				print( endpoint )
-#				print(path)
 				return endpoint
 		endpoints.sort( compareSegmentLength )
 		for endpoint in endpoints[ : 15 ]: # increasing the number of searched endpoints increases the search time, with 20 fill took 600 seconds for cilinder.gts, with 10 fill took 533 seconds
