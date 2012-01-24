@@ -70,7 +70,7 @@ def getManipulatedPaths(close, elementNode, loop, prefix, sideLength):
 		point.z += lift
 	return [loop]
 
-def getNewDerivation(elementNode):
+def getNewDerivation(elementNode, prefix, sideLength):
 	'Get new derivation.'
 	return BottomDerivation(elementNode, '')
 
@@ -98,10 +98,6 @@ class BottomDerivation:
 		self.altitude = evaluate.getEvaluatedFloat(0.0, elementNode, prefix + 'altitude')
 		self.elementNode = elementNode
 		self.liftPath = evaluate.getEvaluatedBoolean(True, elementNode, prefix + 'liftPath')
-
-	def __repr__(self):
-		"Get the string representation of this BottomDerivation."
-		return str(self.__dict__)
 
 	def getAdditionalPathLift(self):
 		"Get path lift."

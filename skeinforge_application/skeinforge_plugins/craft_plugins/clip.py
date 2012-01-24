@@ -259,7 +259,7 @@ class ClipSkein:
 				absolutePerimeterWidth = abs(self.perimeterWidth)
 				self.clipLength = clipRepository.clipOverPerimeterWidth.value * self.perimeterWidth
 				self.connectingStepLength = 0.5 * absolutePerimeterWidth
-				self.layerPixelWidth = 0.267 * absolutePerimeterWidth
+				self.layerPixelWidth = 0.34321 * absolutePerimeterWidth
 				self.maximumConnectionDistance = clipRepository.maximumConnectionDistanceOverPerimeterWidth.value * absolutePerimeterWidth
 			elif firstWord == '(<travelFeedRatePerSecond>':
 				self.travelFeedRateMinute = 60.0 * float(splitLine[1])

@@ -138,38 +138,6 @@ def getGcodeWithoutDuplication(duplicateWord, gcodeText):
 		else:
 			if len(line) > 0:
 				output.write(line + '\n')
-	return output.getvalue() ###
-	return gcodeText
-	isExtruderActive = False
-	lines = archive.getTextLines(gcodeText)
-	oldDuplicationIndex = None
-	oldWrittenLine = None
-	output = cStringIO.StringIO()
-	for lineIndex, line in enumerate(lines):
-		firstWord = getFirstWordFromLine(line)
-		if firstWord == duplicateWord:
-			if oldDuplicationIndex == None:
-				oldDuplicationIndex = lineIndex
-			else:
-				lines[oldDuplicationIndex] = line
-				lines[lineIndex] = ''
-		elif firstWord.startswith('G'):
-			if isExtruderActive:
-				oldDuplicationIndex = None
-		elif firstWord == 'M101':
-			isExtruderActive = True
-			oldDuplicationIndex = None
-		elif firstWord == 'M103':
-			isExtruderActive = False
-	for line in lines:
-		firstWord = getFirstWordFromLine(line)
-		if firstWord == duplicateWord:
-			if line != oldWrittenLine:
-				output.write(line + '\n')
-				oldWrittenLine = line
-		else:
-			if len(line) > 0:
-				output.write(line + '\n')
 	return output.getvalue()
 
 def getIndexOfStartingWithSecond(letter, splitLine):

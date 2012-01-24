@@ -93,7 +93,3 @@ class CarveDerivation:
 		self.importRadius = setting.getImportRadius(elementNode)
 		self.layerThickness = setting.getLayerThickness(elementNode)
 		self.targetElementNode = evaluate.getElementNodeByKey(elementNode, 'target')
-
-	def __repr__(self):
-		"Get the string representation of this CarveDerivation."
-		return str(self.__dict__)

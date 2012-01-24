@@ -58,7 +58,3 @@ class SVGDerivation:
 		'Set defaults.'
 		self.svgReader = svg_reader.SVGReader()
 		self.svgReader.parseSVGByElementNode(elementNode)
-
-	def __repr__(self):
-		"Get the string representation of this SVGDerivation."
-		return str(self.__dict__)

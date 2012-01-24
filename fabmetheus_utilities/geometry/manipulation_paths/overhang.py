@@ -108,14 +108,13 @@ def getManipulatedPaths(close, elementNode, loop, prefix, sideLength):
 		print('Warning, loop has less than three sides in getManipulatedPaths in overhang for:')
 		print(elementNode)
 		return [loop]
-	overhangRadians = setting.getOverhangRadians(elementNode)
-	overhangPlaneAngle = euclidean.getWiddershinsUnitPolar(0.5 * math.pi - overhangRadians)
-	overhangVerticalRadians = math.radians(evaluate.getEvaluatedFloat(0.0, elementNode,  prefix + 'inclination'))
-	if overhangVerticalRadians != 0.0:
-		overhangVerticalCosine = abs(math.cos(overhangVerticalRadians))
-		if overhangVerticalCosine == 0.0:
+	derivation = OverhangDerivation(elementNode, prefix)
+	overhangPlaneAngle = euclidean.getWiddershinsUnitPolar(0.5 * math.pi - derivation.overhangRadians)
+	if derivation.overhangInclinationRadians != 0.0:
+		overhangInclinationCosine = abs(math.cos(derivation.overhangInclinationRadians))
+		if overhangInclinationCosine == 0.0:
 			return [loop]
-		imaginaryTimesCosine = overhangPlaneAngle.imag * overhangVerticalCosine
+		imaginaryTimesCosine = overhangPlaneAngle.imag * overhangInclinationCosine
 		overhangPlaneAngle = euclidean.getNormalized(complex(overhangPlaneAngle.real, imaginaryTimesCosine))
 	alongAway = AlongAway(loop, overhangPlaneAngle)
 	if euclidean.getIsWiddershinsByVector3(loop):
@@ -130,6 +129,10 @@ def getMinimumYByPath(path):
 	for point in path:
 		minimumYByPath = min( minimumYByPath, point.y )
 	return minimumYByPath
+
+def getNewDerivation(elementNode, prefix, sideLength):
+	'Get new derivation.'
+	return OverhangDerivation(elementNode, prefix)
 
 def processElementNode(elementNode):
 	"Process the xml element."
@@ -266,6 +269,14 @@ class OverhangClockwise:
 		supportY = tipY - self.halfRiseOverWidth * truncatedOverhangSpan
 		supportPoints = [ Vector3( supportXLeft, supportY, highest.z ), Vector3( supportXRight, supportY, highest.z ) ]
 		self.alongAway.loop[ unsupportedBeginIndex : endIndex ] = supportPoints
+
+
+class OverhangDerivation:
+	"Class to hold overhang variables."
+	def __init__(self, elementNode, prefix):
+		'Set defaults.'
+		self.overhangRadians = setting.getOverhangRadians(elementNode)
+		self.overhangInclinationRadians = math.radians(evaluate.getEvaluatedFloat(0.0, elementNode,  prefix + 'inclination'))
 
 
 class OverhangWiddershinsLeft:

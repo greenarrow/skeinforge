@@ -112,7 +112,3 @@ class DisjoinDerivation:
 		self.layerThickness = setting.getLayerThickness(elementNode)
 		self.sheetThickness = setting.getSheetThickness(elementNode)
 		self.targetElementNode = evaluate.getElementNodeByKey(elementNode, 'target')
-
-	def __repr__(self):
-		"Get the string representation of this DisjoinDerivation."
-		return str(self.__dict__)

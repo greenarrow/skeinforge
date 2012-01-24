@@ -1023,12 +1023,10 @@ def getJoinOfXIntersectionIndexes( xIntersectionIndexList ):
 
 def getLargestLoop(loops):
 	'Get largest loop from loops.'
-	if len(loops) == 1:
-		return loops[0]
-	largestArea = - 987654321.0
+	largestArea = -987654321.0
 	largestLoop = []
 	for loop in loops:
-		loopArea = abs( getAreaLoop(loop) )
+		loopArea = abs(getAreaLoopAbsolute(loop))
 		if loopArea > largestArea:
 			largestArea = loopArea
 			largestLoop = loop
@@ -1456,11 +1454,15 @@ def getRoundedPoint(point):
 def getRoundedToPlaces(decimalPlaces, number):
 	'Get number rounded to a number of decimal places.'
 	decimalPlacesRounded = max(1, int(round(decimalPlaces)))
-	return round(number, decimalPlacesRounded )
+	return round(number, decimalPlacesRounded)
 
 def getRoundedToPlacesString(decimalPlaces, number):
-	'Get number rounded to a number of decimal places as a string.'
-	return str(getRoundedToPlaces(decimalPlaces, number))
+	'Get number rounded to a number of decimal places as a string, without exponential formatting.'
+	roundedToPlaces = getRoundedToPlaces(decimalPlaces, number)
+	roundedToPlacesString = str(roundedToPlaces)
+	if 'e' in roundedToPlacesString:
+		return ('%.15f' % roundedToPlaces).rstrip('0')
+	return roundedToPlacesString
 
 def getRoundedToThreePlaces(number):
 	'Get number rounded to three places as a string.'

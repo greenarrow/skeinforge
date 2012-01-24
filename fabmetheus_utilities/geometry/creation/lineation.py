@@ -110,9 +110,10 @@ def getFloatByPrefixSide(defaultValue, elementNode, prefix, side):
 	'Get float by prefix and side.'
 	if elementNode == None:
 		return defaultValue
-	key = prefix + 'OverSide'
-	if key in elementNode.attributes:
-		defaultValue = euclidean.getFloatFromValue(evaluate.getEvaluatedValueObliviously(elementNode, key)) * side
+	if side != None:
+		key = prefix + 'OverSide'
+		if key in elementNode.attributes:
+			defaultValue = euclidean.getFloatFromValue(evaluate.getEvaluatedValueObliviously(elementNode, key)) * side
 	return evaluate.getEvaluatedFloat(defaultValue, elementNode, prefix)
 
 def getGeometryOutput(derivation, elementNode):
@@ -165,10 +166,6 @@ def getPackedGeometryOutputByLoop(elementNode, sideLoop):
 def getRadiusAverage(radiusComplex):
 	'Get average radius from radiusComplex.'
 	return math.sqrt(radiusComplex.real * radiusComplex.imag)
-
-def getRadiusByPrefix(defaultValue, elementNode, prefix, sideLength):
-	'Get radius by prefix.'
-	return getFloatByPrefixSide(defaultValue, elementNode, prefix + 'radius', sideLength)
 
 def getRadiusComplex(elementNode, radius):
 	'Get radius complex for elementNode.'
@@ -233,10 +230,6 @@ class LineationDerivation:
 	def __init__(self, elementNode):
 		'Set defaults.'
 		self.target = evaluate.getTransformedPathsByKey([], elementNode, 'target')
-
-	def __repr__(self):
-		'Get the string representation of this LineationDerivation.'
-		return str(self.__dict__)
 
 
 class SideLoop:

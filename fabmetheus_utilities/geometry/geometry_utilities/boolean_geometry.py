@@ -39,7 +39,7 @@ def getEmptyZLoops(archivableObjects, importRadius, shouldPrintWarning, z, zoneA
 	visibleObjectLoopsList = boolean_solid.getVisibleObjectLoopsList(importRadius, visibleObjects, emptyZ)
 	loops = euclidean.getConcatenatedList(visibleObjectLoopsList)
 	if euclidean.isLoopListIntersecting(loops):
-		loops = boolean_solid.getLoopsUnified(importRadius, visibleObjectLoopsList)
+		loops = boolean_solid.getLoopsUnion(importRadius, visibleObjectLoopsList)
 		if shouldPrintWarning:
 			print('Warning, the triangle mesh slice intersects itself in getExtruderPaths in boolean_geometry.')
 			print( 'Something will still be printed, but there is no guarantee that it will be the correct shape.' )
@@ -50,7 +50,7 @@ def getEmptyZLoops(archivableObjects, importRadius, shouldPrintWarning, z, zoneA
 def getLoopLayers(archivableObjects, importRadius, layerThickness, maximumZ, shouldPrintWarning, z, zoneArrangement):
 	'Get loop layers.'
 	loopLayers = []
-	while z < maximumZ:
+	while z <= maximumZ:
 		triangle_mesh.getLoopLayerAppend(loopLayers, z).loops = getEmptyZLoops(archivableObjects, importRadius, True, z, zoneArrangement)
 		z += layerThickness
 	return loopLayers
@@ -63,8 +63,6 @@ def getMinimumZ(geometryObject):
 	booleanGeometry.layerThickness = setting.getLayerThickness(geometryObject.elementNode)
 	archivableMinimumZ = booleanGeometry.getMinimumZ()
 	geometryMinimumZ = geometryObject.getMinimumZ()
-	if archivableMinimumZ == None and geometryMinimumZ == None:
-		return None
 	if archivableMinimumZ == None:
 		return geometryMinimumZ
 	if geometryMinimumZ == None:

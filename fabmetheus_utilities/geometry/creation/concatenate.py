@@ -52,7 +52,3 @@ class ConcatenateDerivation:
 	def __init__(self, elementNode):
 		'Initialize.'
 		self.target = evaluate.getTransformedPathsByKey([], elementNode, 'target')
-
-	def __repr__(self):
-		'Get the string representation of this ConcatenateDerivation.'
-		return str(self.__dict__)

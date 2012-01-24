@@ -124,7 +124,7 @@ class TableauRepository:
 		self.screenHorizontalInset = settings.IntSpin().getFromValue( 80, 'Screen Horizontal Inset (pixels):', self, 1000, 100 )
 		self.screenVerticalInset = settings.IntSpin().getFromValue( 120, 'Screen Vertical Inset (pixels):', self, 1000, 220 )
 		settings.LabelSeparator().getFromRepository(self)
-		self.showGcode = settings.BooleanSetting().getFromValue('Show Gcode', self, True )
+		self.showGcode = settings.BooleanSetting().getFromValue('Show Gcode', self, True)
 
 	def setToDisplaySave(self, event=None):
 		'Set the setting values to the display, save the new values.'
@@ -417,6 +417,8 @@ class TableauWindow:
 
 	def getDrawnLineText( self, location, tags, text ):
 		'Get the line text drawn on the canvas.'
+		if not self.repository.showGcode.value:
+			return
 		anchorTowardCenter = settings.Tkinter.N
 		if location.imag > float( self.canvasHeight ) * 0.1:
 			anchorTowardCenter = settings.Tkinter.S

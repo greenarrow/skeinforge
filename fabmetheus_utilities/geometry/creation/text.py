@@ -61,7 +61,3 @@ class TextDerivation:
 		self.fontSize = evaluate.getEvaluatedFloat(self.fontSize, elementNode, 'fontSize')
 		self.textString = elementNode.getTextContent()
 		self.textString = evaluate.getEvaluatedString(self.textString, elementNode, 'text')
-
-	def __repr__(self):
-		"Get the string representation of this TextDerivation."
-		return str(self.__dict__)

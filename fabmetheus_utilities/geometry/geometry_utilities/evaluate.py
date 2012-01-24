@@ -1015,6 +1015,13 @@ class ClassObject:
 			self.selfDictionary[attributeName] = value
 
 
+class EmptyObject:
+	'An empty object.'
+	def __init__(self):
+		'Do nothing.'
+		pass
+
+
 class Evaluator:
 	'Base evaluator class.'
 	def __init__(self, elementNode, word):

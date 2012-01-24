@@ -1,9 +1,21 @@
 """
 This page is in the table of contents.
-Raft is a script to create a raft, elevate the nozzle and set the temperature.
+Raft is a plugin to create a raft, elevate the nozzle and set the temperature.  A raft is a flat base structure on top of which your object is being build and has a few different purposes. It fills irregularities like scratches and pits in your printbed and gives you a nice base parallel to the printheads movement. It also glues your object to the bed so to prevent warping in bigger object.  The rafts base layer performs these tricks while the sparser interface layer(s) help you removing the object from the raft after printing.  It is based on the Nophead's reusable raft, which has a base layer running one way, and a couple of perpendicular layers above.  Each set of layers can be set to a different temperature.  There is the option of having the extruder orbit the raft for a while, so the heater barrel has time to reach a different temperature, without ooze accumulating around the nozzle.
 
 The raft manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Raft
+
+The important values for the raft settings are the temperatures of the raft, the first layer and the next layers.  These will be different for each material.  The default settings for ABS, HDPE, PCL & PLA are extrapolated from Nophead's experiments.
+
+You don't necessarily need a raft and especially small object will print fine on a flat bed without one, sometimes its even better when you need a water tight base to print directly on the bed.  If you want to only set the temperature or only create support material or only elevate the nozzle without creating a raft, set the Base Layers and Interface Layers to zero.
+
+<gallery perRow="1">
+Image:Raft.jpg|Raft
+</gallery>
+
+Example of a raft on the left with the interface layers partially removed exposing the base layer. Notice that the first line of the base is rarely printed well because of the startup time of the extruder. On the right you see an object with its raft still attached.
+
+The Raft panel has some extra settings, it probably made sense to have them there but they have not that much to do with the actual Raft. First are the Support material settings. Since close to all RepRap style printers have no second extruder for support material Skeinforge offers the option to print support structures with the same material set at a different speed and temperature. The idea is that the support sticks less to the actual object when it is extruded around the minimum possible working temperature. This results in a temperature change EVERY layer so build time will increase seriously.
 
 Allan Ecker aka The Masked Retriever's has written two quicktips for raft which follow below.
 "Skeinforge Quicktip: The Raft, Part 1" at:
@@ -11,25 +23,26 @@ http://blog.thingiverse.com/2009/07/14/skeinforge-quicktip-the-raft-part-1/
 "Skeinforge Quicktip: The Raft, Part II" at:
 http://blog.thingiverse.com/2009/08/04/skeinforge-quicktip-the-raft-part-ii/
 
-Pictures of rafting in action are available from the Metalab blog at:
+Nophead has written about rafts on his blog:
+http://hydraraptor.blogspot.com/2009/07/thoughts-on-rafts.html
+
+More pictures of rafting in action are available from the Metalab blog at:
 http://reprap.soup.io/?search=rafting
 
-Raft is based on the Nophead's reusable raft, which has a base layer running one way, and a couple of perpendicular layers above.  Each set of layers can be set to a different temperature.  There is the option of having the extruder orbit the raft for a while, so the heater barrel has time to reach a different temperature, without ooze accumulating around the nozzle.
-
-If you want to only set the temperature or only create support material or only elevate the nozzle without creating a raft, set the Base Layers and Interface Layers to zero.
-
-The important values for the raft settings are the temperatures of the raft, the first layer and the next layers.  These will be different for each material.  The default settings for ABS, HDPE, PCL & PLA are extrapolated from Nophead's experiments.
-
 ==Operation==
-The default 'Activate Raft' checkbox is on.  When it is on, the functions described below will work, when it is off, the functions will not be called.  The raft script sets the temperature.
+Default: On
+
+When it is on, the functions described below will work, when it is off, nothing will be done, so no temperatures will be set, nozzle will not be lifted..
 
 ==Settings==
 ===Add Raft, Elevate Nozzle, Orbit===
-Default is on.
+Default: On
 
-When selected, the script will also create a raft, elevate the nozzle, orbit and set the altitude of the bottom of the raft.
+When selected, the script will also create a raft, elevate the nozzle, orbit and set the altitude of the bottom of the raft.  It also turns on support generation.
 
 ===Base===
+Base layer is the part of the raft that touches the bed.
+
 ====Base Feed Rate Multiplier====
 Default is one.
 
@@ -94,7 +107,7 @@ Defines the ratio of the height & width of the interface layer compared to the h
 ====Interface Layers====
 Default is two.
 
-Defines the number of interface layers.
+Defines the number of interface layers to print.
 
 ====Interface Nozzle Lift over Interface Layer Thickness====
 Default is 0.45.
@@ -120,11 +133,11 @@ Defines the amount the nozzle is above the center of the operating extrusion div
 ===Raft Size===
 The raft fills a rectangle whose base size is the rectangle around the bottom layer of the object expanded on each side by the 'Raft Margin' plus the 'Raft Additional Margin over Length (%)' percentage times the length of the side.
 
-====Raft Margin====
-Default is three millimeters.
-
 ====Raft Additional Margin over Length====
 Default is 1 percent.
+
+====Raft Margin====
+Default is three millimeters.
 
 ===Support===
 Good articles on support material are at:
@@ -137,12 +150,12 @@ Default is off.
 When selected, the support material will cross hatched.  Cross hatching the support makes it stronger and harder to remove, which is why the default is off.
 
 ====Support Flow Rate over Operating Flow Rate====
-Default is 0.9.
+Default: 0.9.
 
 Defines the ratio of the flow rate when the support is extruded over the operating flow rate.  With a number less than one, the support flow rate will be smaller so the support will be thinner and easier to remove.
 
 ====Support Gap over Perimeter Extrusion Width====
-Default is 0.5.
+Default: 0.5.
 
 Defines the gap between the support material and the object over the perimeter extrusion width.
 
@@ -164,7 +177,7 @@ When selected, raft will not add support material.
 ====Support Minimum Angle====
 Default is sixty degrees.
 
-Defines the minimum angle that a surface overhangs before support material is added.  This angle is defined from the vertical, so zero is a vertical wall, ten is a wall with a bit of overhang, thirty is the typical safe angle for filament extrusion, sixty is a really high angle for extrusion and ninety is an unsupported horizontal ceiling.
+Defines the minimum angle that a surface overhangs before support material is added.  If angle is lower then this value the support will be generated.  This angle is defined from the vertical, so zero is a vertical wall, ten is a wall with a bit of overhang, thirty is the typical safe angle for filament extrusion, sixty is a really high angle for extrusion and ninety is an unsupported horizontal ceiling.
 
 ==Examples==
 The following examples raft the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and raft.py.
@@ -532,7 +545,7 @@ class RaftSkein:
 		if len(endpoints) < 1:
 			return
 		aroundPixelTable = {}
-		aroundWidth = 0.267 * step
+		aroundWidth = 0.34321 * step
 		paths = euclidean.getPathsFromEndpoints(endpoints, 1.5 * step, aroundPixelTable, aroundWidth)
 		self.addLayerLine(z)
 		if self.oldFlowRate != None:
@@ -639,30 +652,6 @@ class RaftSkein:
 				temperature = self.objectFirstLayerInfillTemperature
 		self.addTemperatureLineIfDifferent(temperature)
 		self.distanceFeedRate.addGcodeMovementZWithFeedRate(self.feedRateMinute, self.oldLocation.dropAxis(), z)
-		return ###
-		location = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
-		feedRateMinuteMultiplied = self.feedRateMinute
-		self.oldLocation = location
-		z = location.z
-		if self.operatingJump != None:
-			z += self.operatingJump
-		flowRate = self.oldFlowRate
-		temperature = self.objectNextLayersTemperature
-		if self.layerIndex == 0:
-			if self.isPerimeterPath:
-				feedRateMinuteMultiplied *= self.repository.objectFirstLayerFeedRatePerimeterMultiplier.value
-				if flowRate != None:
-					flowRate *= self.repository.objectFirstLayerFlowRatePerimeterMultiplier.value
-				temperature = self.objectFirstLayerPerimeterTemperature
-			else:
-				feedRateMinuteMultiplied *= self.objectFirstLayerFeedRateInfillMultiplier
-				if flowRate != None:
-					flowRate *= self.objectFirstLayerFlowRateInfillMultiplier
-				temperature = self.objectFirstLayerInfillTemperature
-		self.addFlowRate(flowRate)
-		self.addTemperatureLineIfDifferent(temperature)
-		self.distanceFeedRate.addGcodeMovementZWithFeedRate(feedRateMinuteMultiplied, location.dropAxis(), z)
-		self.addFlowRate(self.oldFlowRate)
 
 	def addRaftPerimeters(self):
 		'Add raft perimeters if there is a raft.'
@@ -708,7 +697,7 @@ class RaftSkein:
 		self.distanceFeedRate.addLinesSetAbsoluteDistanceMode(self.supportStartLines)
 		self.addTemperatureOrbits(endpoints, self.supportedLayersTemperature, z)
 		aroundPixelTable = {}
-		aroundWidth = 0.267 * self.interfaceStep
+		aroundWidth = 0.34321 * self.interfaceStep
 		boundaryLoops = self.boundaryLayers[self.layerIndex].loops
 		halfSupportOutset = 0.5 * self.supportOutset
 		aroundBoundaryLoops = intercircle.getAroundsFromLoops(boundaryLoops, halfSupportOutset)

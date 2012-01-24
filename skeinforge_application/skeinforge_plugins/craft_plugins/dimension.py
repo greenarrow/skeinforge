@@ -290,12 +290,12 @@ class DimensionSkein:
 		scaledFlowRate = self.flowRate * self.flowScaleSixty
 		return self.getExtrusionDistanceStringFromExtrusionDistance(scaledFlowRate / self.feedRateMinute * distance)
 
-	def getExtrusionDistanceStringFromExtrusionDistance( self, extrusionDistance ):
+	def getExtrusionDistanceStringFromExtrusionDistance(self, extrusionDistance):
 		'Get the extrusion distance string from the extrusion distance.'
 		if self.repository.relativeExtrusionDistance.value:
-			return ' E' + self.distanceFeedRate.getRounded( extrusionDistance )
+			return ' E' + self.distanceFeedRate.getRounded(extrusionDistance)
 		self.totalExtrusionDistance += extrusionDistance
-		return ' E' + self.distanceFeedRate.getRounded( self.totalExtrusionDistance )
+		return ' E' + self.distanceFeedRate.getRounded(self.totalExtrusionDistance)
 
 	def getRetractionRatio(self, lineIndex):
 		'Get the retraction ratio.'
@@ -381,6 +381,7 @@ class DimensionSkein:
 			self.absoluteDistanceMode = False
 		elif firstWord == '(<layer>':
 			self.layerIndex += 1
+			settings.printProgress(self.layerIndex, 'dimension')
 		elif firstWord == 'M101':
 			self.addLinearMoveExtrusionDistanceLine(self.restartDistance * self.retractionRatio)
 			if self.totalExtrusionDistance > self.repository.maximumEValueBeforeReset.value: 

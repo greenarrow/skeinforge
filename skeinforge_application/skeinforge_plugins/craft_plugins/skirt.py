@@ -1,22 +1,28 @@
 """
 This page is in the table of contents.
-Skirt is a script to give the extruder some extra time to begin extruding properly before beginning the object, and to put a baffle around the model in order to keep the extrusion warm.
+Skirt is a plugin to give the extruder some extra time to begin extruding properly before beginning the object, and to put a baffle around the model in order to keep the extrusion warm.
+
+The skirt manual page is at:
+http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skirt
 
 It is loosely based on Lenbook's outline plugin:
+
 http://www.thingiverse.com/thing:4918
 
 it is also loosely based on the outline that Nophead sometimes uses:
+
 http://hydraraptor.blogspot.com/2010/01/hot-metal-and-serendipity.html
 
 and also loosely based on the baffles that Nophead made to keep corners warm:
+
 http://hydraraptor.blogspot.com/2010/09/some-corners-like-it-hot.html
 
 If you want only an outline, set 'Layers To' to one.  This gives the extruder some extra time to begin extruding properly before beginning your object, and gives you an early verification of where your object will be extruded.
 
-If you also want an insulating skirt around the entire object, set 'Layers To' to a huge number, like 9876554321.  This will additionally make an insulating baffle around the object; to prevent moving air from cooling the object, which increases warping, especially in corners.
+If you also want an insulating skirt around the entire object, set 'Layers To' to a huge number, like 912345678.  This will additionally make an insulating baffle around the object; to prevent moving air from cooling the object, which increases warping, especially in corners.
 
 ==Operation==
-The default 'Activate Skirt' checkbox is off.  When it is on, the functions described below will work, when it is off, the functions will not be called.
+The default 'Activate Skirt' checkbox is off.  When it is on, the functions described below will work, when it is off, nothing will be done.
 
 ==Settings==
 ===Convex===
@@ -29,10 +35,10 @@ Default is three.
 
 Defines the ratio of the gap between the object and the skirt over the perimeter width.  If the ratio is too low, the skirt will connect to the object, if the ratio is too high, the skirt willl not provide much insulation for the object.
 
-====Layers To====
+===Layers To===
 Default is a one.
 
-Defines the number of layers of the skirt.  If you want only an outline, set 'Layers To' to one.  If you want an insulating skirt around the entire object, set 'Layers To' to a huge number, like 9876554321.
+Defines the number of layers of the skirt.  If you want only an outline, set 'Layers To' to one.  If you want an insulating skirt around the entire object, set 'Layers To' to a huge number, like 912345678.
 
 ==Examples==
 The following examples skirt the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and skirt.py.
@@ -114,7 +120,7 @@ class LoopCrossDictionary:
 
 	def __repr__(self):
 		'Get the string representation of this LoopCrossDictionary.'
-		return str(self.__dict__)
+		return str(self.loop)
 
 
 class SkirtRepository:
@@ -124,6 +130,7 @@ class SkirtRepository:
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.skirt.html', self)
 		self.fileNameInput = settings.FileNameInput().getFromFileName(
 			fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Skirt', self, '')
+		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skirt')
 		self.activateSkirt = settings.BooleanSetting().getFromValue('Activate Skirt', self, False)
 		self.convex = settings.BooleanSetting().getFromValue('Convex:', self, True)
 		self.gapOverPerimeterWidth = settings.FloatSpin().getFromValue(
@@ -147,7 +154,6 @@ class SkirtSkein:
 		self.feedRateMinute = 961.0
 		self.isExtruderActive = False
 		self.isSupportLayer = False
-		self.layerCount = settings.LayerCount()
 		self.layerIndex = -1
 		self.lineIndex = 0
 		self.lines = None
@@ -243,7 +249,7 @@ class SkirtSkein:
 				layerIndex += 1
 				if layerIndex > self.repository.layersTo.value:
 					return
-				self.layerCount.printProgressIncrement('skirt')
+				settings.printProgress(layerIndex, 'skirt')
 
 	def parseInitialization(self):
 		'Parse gcode initialization and store the parameters.'

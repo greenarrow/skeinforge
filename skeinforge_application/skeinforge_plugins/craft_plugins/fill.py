@@ -773,7 +773,6 @@ class FillRepository:
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Fill', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Fill')
 		self.activateFill = settings.BooleanSetting().getFromValue('Activate Fill', self, True)
-#		self.addInfillPerimeter = settings.BooleanSetting().getFromValue('Add Infill and Perimeter', self, True)
 		settings.LabelSeparator().getFromRepository(self)
 		settings.LabelDisplay().getFromName('- Diaphragm -', self )
 		self.diaphragmPeriod = settings.IntSpin().getFromValue( 20, 'Diaphragm Period (layers):', self, 200, 100 )
@@ -876,8 +875,7 @@ class FillSkein:
 		if rotatedLayer.rotation != None:
 			extraShells = 0
 		self.distanceFeedRate.addLine('(<rotation> %s )' % layerRotation)
-		aroundInset = 0.267 * self.infillWidth
-		aroundWidth = 0.267 * self.infillWidth
+		aroundWidth = 0.34321 * self.infillWidth
 		doubleInfillWidth = 2.0 * self.infillWidth
 		gridPointInsetX = 0.5 * self.fillInset
 		self.lastExtraShells = extraShells
@@ -889,17 +887,13 @@ class FillSkein:
 			else:
 				self.isJunctionWide = False
 		nestedRings = euclidean.getOrderedNestedRings(rotatedLayer.nestedRings)
-#		if not self.repository.addInfillPerimeter.value:
-#			self.addThreadsBridgeLayer(layerIndex, nestedRings, rotatedLayer)
-#			return
 		radiusAround = 0.5 * min(self.infillWidth, self.perimeterWidth)
 		createFillForSurroundings(nestedRings, self.perimeterMinusHalfInfillWidth, radiusAround, False)
 		for extraShellIndex in xrange(extraShells):
 			createFillForSurroundings(nestedRings, self.infillWidth, radiusAround, True)
 		fillLoops = euclidean.getFillOfSurroundings(nestedRings, None)
 		rotatedLoops = euclidean.getRotatedComplexLists(reverseRotation, fillLoops)
-		infillDictionary = triangle_mesh.getInfillDictionary(
-			aroundInset, arounds, aroundWidth, self.fillInset, self.infillWidth, pixelTable, rotatedLoops)
+		infillDictionary = triangle_mesh.getInfillDictionary(arounds, aroundWidth, self.fillInset, self.infillWidth, pixelTable, rotatedLoops)
 		if len(arounds) < 1:
 			self.addThreadsBridgeLayer(layerIndex, nestedRings, rotatedLayer)
 			return

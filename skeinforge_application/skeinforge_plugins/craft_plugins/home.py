@@ -1,16 +1,16 @@
 """
 This page is in the table of contents.
-Home is a script to home the tool.
+Plugin to home the tool at beginning of each layer.
 
 The home manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Home
 
 ==Operation==
-The default 'Activate Home' checkbox is on.  When it is on, the functions described below will work, when it is off, the functions will not be called.
+The default 'Activate Home' checkbox is on.  When it is on, the functions described below will work, when it is off, nothing will be done.
 
 ==Settings==
 ===Name of Home File===
-Default is home.gcode.
+Default: home.gcode
 
 At the beginning of a each layer, home will add the commands of a gcode script with the name of the "Name of Home File" setting, if one exists.  Home does not care if the text file names are capitalized, but some file systems do not handle file name cases properly, so to be on the safe side you should give them lower case names.  Home looks for those files in the alterations folder in the .skeinforge folder in the home directory. If it doesn't find the file it then looks in the alterations folder in the skeinforge_plugins folder.
 
@@ -81,7 +81,7 @@ class HomeRepository:
 		"Set the default settings, execute title & settings fileName."
 		skeinforge_profile.addListsToCraftTypeRepository('skeinforge_application.skeinforge_plugins.craft_plugins.home.html', self)
 		self.fileNameInput = settings.FileNameInput().getFromFileName( fabmetheus_interpret.getGNUTranslatorGcodeFileTypeTuples(), 'Open File for Home', self, '')
-		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_home')
+		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Home')
 		self.activateHome = settings.BooleanSetting().getFromValue('Activate Home', self, True )
 		self.nameOfHomeFile = settings.StringSetting().getFromValue('Name of Home File:', self, 'home.gcode')
 		self.executeTitle = 'Home'

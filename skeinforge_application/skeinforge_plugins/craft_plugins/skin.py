@@ -1,13 +1,13 @@
 """
 This page is in the table of contents.
-Skin is a script to smooth the surface skin of an object by replacing the perimeter surface with a surface printed at half the carve
+Skin is a plugin to smooth the surface skin of an object by replacing the perimeter surface with a surface printed at a fraction of the carve
 height.  This gives the impression that the object was carved at a much thinner height giving a high-quality finish, but still prints 
 in a relatively short time.  The latest process has some similarities with a description at:
+
 http://adventuresin3-dprinting.blogspot.com/2011/05/skinning.html
 
 The skin manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Skin
-
 
 ==Operation==
 The default 'Activate Skin' checkbox is off.  When it is on, the functions described below will work, when it is off, nothing will be done.
@@ -39,11 +39,10 @@ Default: 1
 
 Defines which layer of the print the skinning process starts from. It is not wise to set this to zero, skinning the bottom layer is likely to cause the bottom perimeter not to adhere well to the print surface.
 
-====Tips====
+==Tips==
 Due to the very small Z-axis moves skinning can generate as it prints the perimeter, it can cause the Z-axis speed to be limited by the Limit plug-in, if you have it enabled. This can cause some printers to pause excessively during each layer change. To overcome this, ensure that the Z-axis max speed in the Limit tool is set to an appropriate value for your printer, e.g. 10mm/s
 
-Since Skin prints two half-height perimeter layers for each layer, printing the perimeter last causes the print head to travel down from the current print height. Depending on the shape of your extruder nozzle, you may get higher quality prints if you print the perimeters first, so the print head always travels up.  This is set via the Thread Sequence Choice setting in the Fill tool.
-
+Since Skin prints a number of fractional-height perimeter layers for each layer, printing the perimeter last causes the print head to travel down from the current print height. Depending on the shape of your extruder nozzle, you may get higher quality prints if you print the perimeters first, so the print head always travels up.  This is set via the Thread Sequence Choice setting in the Fill tool.
 
 ==Examples==
 The following examples skin the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and skin.py.
@@ -148,7 +147,6 @@ class SkinSkein:
 		self.infill = None
 		self.infillBoundaries = None
 		self.infillBoundary = None
-		self.layerCount = settings.LayerCount()
 		self.layerIndex = -1
 		self.lineIndex = 0
 		self.lines = None
@@ -181,9 +179,8 @@ class SkinSkein:
 
 	def addSkinnedInfillBoundary(self, infillBoundaries, offsetY, upperZ, z):
 		'Add skinned infill boundary.'
-		aroundInset = 0.267 * self.skinInfillInset
 		arounds = []
-		aroundWidth = 0.267 * self.skinInfillInset
+		aroundWidth = 0.34321 * self.skinInfillInset
 		endpoints = []
 		pixelTable = {}
 		rotatedLoops = []
@@ -194,7 +191,7 @@ class SkinSkein:
 					infillBoundaryRotated[infillPointRotatedIndex] = complex(infillPointRotated.real, infillPointRotated.imag - offsetY)
 			rotatedLoops.append(infillBoundaryRotated)
 		infillDictionary = triangle_mesh.getInfillDictionary(
-			aroundInset, arounds, aroundWidth, self.skinInfillInset, self.skinInfillWidth, pixelTable, rotatedLoops)
+			arounds, aroundWidth, self.skinInfillInset, self.skinInfillWidth, pixelTable, rotatedLoops)
 		for infillDictionaryKey in infillDictionary.keys():
 			xIntersections = infillDictionary[infillDictionaryKey]
 			xIntersections.sort()
@@ -350,8 +347,8 @@ class SkinSkein:
 				location = gcodec.getLocationFromSplitLine(None, splitLine)
 				self.infillBoundary.append(location.dropAxis())
 		elif firstWord == '(<layer>':
-			self.layerCount.printProgressIncrement('skin')
 			self.layerIndex += 1
+			settings.printProgress(self.layerIndex, 'skin')
 		elif firstWord == 'M101' or firstWord == 'M103':
 			if self.infillBoundaries != None or self.perimeter != None:
 				return

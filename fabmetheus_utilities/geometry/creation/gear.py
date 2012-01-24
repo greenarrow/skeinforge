@@ -1150,7 +1150,3 @@ class GearDerivation:
 		self.addendum = self.toothProfileHalf[-1].imag - self.pitchRadius
 		self.dedendum = abs(self.toothProfileHalf[-1]) - self.pitchRadius + self.clearance
 		self.pinionToothProfile = getToothProfileCylinderByProfile(self, self.pitchRadius, self.teethPinion, self.toothProfileHalf)
-
-	def __repr__(self):
-		"Get the string representation of this GearDerivation."
-		return str(self.__dict__)

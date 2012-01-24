@@ -210,6 +210,16 @@ def addSymmetricYPaths(outputs, paths, y):
 	for path in paths:
 		addSymmetricYPath(outputs, path, y)
 
+def addVector3Loop(loop, loops, vertexes, z):
+	'Add vector3Loop to loops if there is something in it, for inset and outset.'
+	vector3Loop = []
+	for point in loop:
+		vector3Index = Vector3Index(len(vertexes), point.real, point.imag, z)
+		vector3Loop.append(vector3Index)
+		vertexes.append(vector3Index)
+	if len(vector3Loop) > 0:
+		loops.append(vector3Loop)
+
 def addWithLeastLength(importRadius, loops, point):
 	'Insert a point into a loop, at the index at which the loop would be shortest.'
 	close = 1.65 * importRadius # a bit over the experimental minimum additional loop length to restore a right angle
@@ -359,7 +369,7 @@ def getIndexedLoopFromIndexedGrid( indexedGrid ):
 		indexedLoop.append( row[0] )
 	return indexedLoop
 
-def getInfillDictionary(aroundInset, arounds, aroundWidth, infillInset, infillWidth, pixelTable, rotatedLoops, testLoops=None):
+def getInfillDictionary(arounds, aroundWidth, infillInset, infillWidth, pixelTable, rotatedLoops, testLoops=None):
 	'Get combined fill loops which include most of the points.'
 	slightlyGreaterThanInfillInset = intercircle.globalIntercircleMultiplier * infillInset
 	allPoints = intercircle.getPointsFromLoops(rotatedLoops, infillInset, 0.7)
@@ -369,7 +379,7 @@ def getInfillDictionary(aroundInset, arounds, aroundWidth, infillInset, infillWi
 		insetCenter = intercircle.getSimplifiedInsetFromClockwiseLoop(center, infillInset)
 		insetPoint = insetCenter[0]
 		if len(insetCenter) > 2 and intercircle.getIsLarge(insetCenter, infillInset) and euclidean.getIsInFilledRegion(rotatedLoops, insetPoint):
-			around = intercircle.getSimplifiedInsetFromClockwiseLoop(center, aroundInset)
+			around = euclidean.getSimplifiedLoop(center, infillInset)
 			euclidean.addLoopToPixelTable(around, pixelTable, aroundWidth)
 			arounds.append(around)
 			insetLoop = intercircle.getSimplifiedInsetFromClockwiseLoop(center, infillInset)
@@ -492,14 +502,18 @@ def getMeldedPillarOutput(loops):
 	addMeldedPillarByLoops(faces, loops)
 	return getGeometryOutputByFacesVertexes(faces, vertexes)
 
-def getNextEdgeIndexAroundZ( edge, faces, remainingEdgeTable ):
+def getNewDerivation(elementNode):
+	'Get new derivation.'
+	return evaluate.EmptyObject(elementNode)
+
+def getNextEdgeIndexAroundZ(edge, faces, remainingEdgeTable):
 	'Get the next edge index in the mesh carve.'
 	for faceIndex in edge.faceIndexes:
-		face = faces[ faceIndex ]
+		face = faces[faceIndex]
 		for edgeIndex in face.edgeIndexes:
 			if edgeIndex in remainingEdgeTable:
 				return edgeIndex
-	return - 1
+	return -1
 
 def getOrientedLoops(loops):
 	'Orient the loops which must be in descending order.'
@@ -862,7 +876,7 @@ class TriangleMesh( group.Group ):
 			return self.vertexes
 		chainTetragrid = self.getMatrixChainTetragrid()
 		if self.oldChainTetragrid != chainTetragrid:
-			self.oldChainTetragrid = chainTetragrid
+			self.oldChainTetragrid = matrix.getTetragridCopy(chainTetragrid)
 			self.transformedVertexes = None
 		if self.transformedVertexes == None:
 			if len(self.edges) > 0:
@@ -878,15 +892,6 @@ class TriangleMesh( group.Group ):
 		'Get all vertexes.'
 		self.transformedVertexes = None
 		return self.vertexes
-
-	def liftByMinimumZ(self, minimumZ):
-		'Lift the triangle mesh to the altitude.'
-		altitude = evaluate.getEvaluatedFloat(None, self.elementNode, 'altitude')
-		if altitude == None:
-			return
-		lift = altitude - minimumZ
-		for vertex in self.vertexes:
-			vertex.z += lift
 
 	def setCarveImportRadius( self, importRadius ):
 		'Set the import radius.'

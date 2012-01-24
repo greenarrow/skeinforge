@@ -155,7 +155,3 @@ class SpongeSliceDerivation:
 			for pointIndex in xrange(numberOfPoints):
 				point = euclidean.getRandomComplex(-self.inradiusMinusRadiusThickness, self.inradiusMinusRadiusThickness)
 				self.path.append(Vector3(point.real, point.imag))
-
-	def __repr__(self):
-		"Get the string representation of this SpongeSliceDerivation."
-		return str(self.__dict__)

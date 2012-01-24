@@ -173,8 +173,8 @@ class CleaveSkein:
 		layerThickness = repository.layerThickness.value
 		perimeterWidth = repository.perimeterWidth.value
 		carving.setCarveLayerThickness( layerThickness )
-		importRadius = 0.5 * repository.importCoarseness.value * abs( perimeterWidth )
-		carving.setCarveImportRadius( max( importRadius, 0.01 * layerThickness ) )
+		importRadius = 0.5 * repository.importCoarseness.value * abs(perimeterWidth)
+		carving.setCarveImportRadius(max(importRadius, 0.001 * layerThickness))
 		carving.setCarveIsCorrectMesh( repository.correctMesh.value )
 		loopLayers = carving.getCarveBoundaryLayers()
 		if len( loopLayers ) < 1:

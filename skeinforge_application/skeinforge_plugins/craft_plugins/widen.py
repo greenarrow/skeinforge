@@ -11,7 +11,7 @@ The widen manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Widen
 
 ==Operation==
-The default 'Activate Widen' checkbox is off.  When it is on, widen will work, when it is off, widen will not be called.
+The default 'Activate Widen' checkbox is off.  When it is on, widen will work, when it is off, nothing will be done.
 
 ==Examples==
 The following examples widen the file Screw Holder Bottom.stl.  The examples are run in a terminal in the folder which contains Screw Holder Bottom.stl and widen.py.
@@ -101,7 +101,7 @@ def getWidenedLoop(loop, loopList, outsetLoop, radius):
 	intersectingWithinLoops = getIntersectingWithinLoops(loop, loopList, outsetLoop)
 	if len(intersectingWithinLoops) < 1:
 		return loop
-	loopsUnified = boolean_solid.getLoopsUnified(radius, [[loop], intersectingWithinLoops])
+	loopsUnified = boolean_solid.getLoopsUnion(radius, [[loop], intersectingWithinLoops])
 	if len(loopsUnified) < 1:
 		return loop
 	return euclidean.getLargestLoop(loopsUnified)

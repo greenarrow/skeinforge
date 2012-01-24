@@ -3,7 +3,8 @@ This page is in the table of contents.
 This plugin smooths jagged extruder paths.  It takes shortcuts through jagged paths and decreases the feed rate to compensate.
 
 Smooth is based on ideas in Nophead's frequency limit post: 
-http://hydraraptor.blogspot.com/2010/12/frequency-limit.html:
+
+http://hydraraptor.blogspot.com/2010/12/frequency-limit.html
 
 The smooth manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Smooth

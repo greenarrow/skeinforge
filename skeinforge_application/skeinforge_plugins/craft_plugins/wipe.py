@@ -8,7 +8,7 @@ The wipe manual page is at:
 http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Wipe
 
 ==Operation==
-The default 'Activate Wipe' checkbox is off.  When it is on, the functions described below will work, when it is off, the functions will not be called.
+The default 'Activate Wipe' checkbox is off.  When it is on, the functions described below will work, when it is off, nothing will be done.
 
 ==Settings==
 ===Location Arrival===
@@ -164,7 +164,7 @@ class WipeSkein:
 		self.distanceFeedRate = gcodec.DistanceFeedRate()
 		self.extruderActive = False
 		self.highestZ = None
-		self.layerIndex = - 1
+		self.layerIndex = -1
 		self.lineIndex = 0
 		self.lines = None
 		self.oldLocation = None
@@ -245,8 +245,8 @@ class WipeSkein:
 			self.addWipeTravel(splitLine)
 			self.oldLocation = gcodec.getLocationFromSplitLine(self.oldLocation, splitLine)
 		elif firstWord == '(<layer>':
-			settings.printProgress(self.layerIndex, 'wipe')
 			self.layerIndex += 1
+			settings.printProgress(self.layerIndex, 'wipe')
 			if self.layerIndex % self.wipePeriod == 0:
 				self.shouldWipe = True
 		elif firstWord == 'M101':

@@ -67,7 +67,3 @@ class PolygonDerivation:
 		self.extent = evaluate.getEvaluatedInt(end - self.start, elementNode, 'extent')
 		self.extent += self.sidesCeiling * (self.revolutions - 1)
 		self.spiral = evaluate.getVector3ByPrefix(None, elementNode, 'spiral')
-
-	def __repr__(self):
-		"Get the string representation of this PolygonDerivation."
-		return str(self.__dict__)

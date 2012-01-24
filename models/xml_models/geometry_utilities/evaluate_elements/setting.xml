@@ -1,5 +1,6 @@
 <?xml version='1.0' ?>
 <fabmetheus importRadius='1.2345'>
+	<dictionary importCoarseness='=setting.getImportCoarseness()'/>
 	<dictionary importRadius='=setting.getImportRadius()'/>
 	<dictionary interiorOverhangAngle='=setting.getInteriorOverhangAngle()'/>
 	<dictionary interiorOverhangRadians='=setting.getInteriorOverhangRadians()'/>

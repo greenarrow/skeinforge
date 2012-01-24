@@ -35,13 +35,21 @@ def getCascadeFloatWithoutSelf(defaultFloat, elementNode, key):
 				elementNode = elementNode.parentNode
 	return elementNode.getCascadeFloat(defaultFloat, key)
 
+def getImportCoarseness(elementNode, preferences=None):
+	'Get the importCoarseness.'
+	if elementNode == None:
+		return 1.0
+	if preferences == None:
+		preferences = skeinforge_craft.getCraftPreferences('carve')
+	importCoarseness = skeinforge_craft.getCraftValue('Import Coarseness', preferences)
+	return getCascadeFloatWithoutSelf(importCoarseness, elementNode, 'importCoarseness')
+
 def getImportRadius(elementNode):
 	'Get the importRadius.'
 	if elementNode == None:
 		return 0.36
 	preferences = skeinforge_craft.getCraftPreferences('carve')
-	importCoarseness = skeinforge_craft.getCraftValue('Import Coarseness', preferences)
-	importCoarseness = getCascadeFloatWithoutSelf(importCoarseness, elementNode, 'importCoarseness')
+	importCoarseness = getImportCoarseness(elementNode, preferences)
 	layerThickness = skeinforge_craft.getCraftValue('Layer Thickness', preferences)
 	layerThickness = getCascadeFloatWithoutSelf(layerThickness, elementNode, 'layerThickness')
 	perimeterWidthOverThickness = skeinforge_craft.getCraftValue('Perimeter Width over Thickness', preferences)
@@ -113,6 +121,10 @@ class Setting:
 		'Get the string representation of this Setting.'
 		return self.elementNode
 
+	def getImportCoarseness(self):
+		'Get the importCoarseness.'
+		return getImportCoarseness(self.elementNode)
+
 	def getImportRadius(self):
 		'Get the importRadius.'
 		return getImportRadius(self.elementNode)
@@ -162,7 +174,7 @@ class Setting:
 		return getTwistPrecisionRadians(self.elementNode)
 
 
-globalAccessibleAttributeDictionary = 'getImportRadius getInteriorOverhangAngle getInteriorOverhangRadians'.split()
+globalAccessibleAttributeDictionary = 'getImportCoarseness getImportRadius getInteriorOverhangAngle getInteriorOverhangRadians'.split()
 globalAccessibleAttributeDictionary += 'getLayerThickness getOverhangSpan getOverhangAngle getOverhangRadians'.split()
 globalAccessibleAttributeDictionary += 'getPerimeterWidth getPrecision getSheetThickness getTwistPrecision getTwistPrecisionRadians'.split()
 globalGetAccessibleAttributeSet = set(globalAccessibleAttributeDictionary)

@@ -164,7 +164,3 @@ class GridDerivation:
 		self.typeMenuRadioStrings = 'hexagonal random rectangular'.split()
 		self.typeString = evaluate.getEvaluatedString('rectangular', elementNode, 'type')
 		self.zigzag = evaluate.getEvaluatedBoolean(True, elementNode, 'zigzag')
-
-	def __repr__(self):
-		'Get the string representation of this GridDerivation.'
-		return str(self.__dict__)
