@@ -13,9 +13,7 @@
 <a href="skeinforge_application.skeinforge_plugins.craft_plugins.drill.html">Previous</a> / <a href="skeinforge_application.skeinforge_plugins.craft_plugins.export.html">Next</a> / <a href="contents.html">Contents</a>
 </p>
 <p><tt><br>
-Dwindle is a plugin to smooth the surface dwindle of an object by replacing the edge surface with a surface printed at a fraction of the carve<br>
-height.  This gives the impression that the object was carved at a much thinner height giving a high-quality finish, but still prints <br>
-in a relatively short time.  The latest process has some similarities with a description at:<br>
+Dwindle is a plugin to reduce the feed rate and flow rate at the end of the thread, in order to reduce the ooze when traveling. It reduces the flow rate by a bit more than the feed rate, in order to use up the pent up plastic in the thread so that there is less remaining in the ooze.<br>
  <br>
 The dwindle manual page is at:<br>
 <a href="http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Dwindle">http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Dwindle</a><br>
@@ -23,7 +21,10 @@ The dwindle manual page is at:<br>
 <br />
 <a href="#Operation">Operation</a><br />
 <a href="#Settings">Settings</a><br />
-&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Vertical Divisions">Vertical Divisions</a><br />
+&nbsp;&nbsp;<a href="#End Rate Multiplier">End Rate Multiplier</a><br />
+&nbsp;&nbsp;<a href="#Pent Up Volume">Pent Up Volume</a><br />
+&nbsp;&nbsp;<a href="#Slowdown Steps">Slowdown Steps</a><br />
+&nbsp;&nbsp;<a href="#Slowdown Volume">Slowdown Volume</a><br />
 <a href="#Examples">Examples</a><br />
 <br />
 <a name="Operation" id="Operation"></a><h2>Operation</h2>
@@ -34,11 +35,29 @@ The default 'Activate Dwindle' checkbox is off.  When it is on, the functions de
 <a name="Settings" id="Settings"></a><h2>Settings</h2>
 <hr>
 
-<a name="Vertical Divisions" id="Vertical Divisions"></a><h4>Vertical Divisions</h4>
+<a name="End Rate Multiplier" id="End Rate Multiplier"></a><h3>End Rate Multiplier</h3>
 
-Default: 2<br>
+Default: 0.5<br>
  <br>
-Defines the number of times the dwindle infill and edges are divided vertically.<br>
+Defines the ratio of the feed and flow rate at the end over the feed and flow rate of the rest of the thread. With reasonable values for the 'Pent Up Volume' and 'Slowdown Volume', the amount of ooze should be roughly proportional to the square of the 'End Rate Multiplier'. If the 'End Rate Multiplier' is too low, the printing will be very slow because the feed rate will be lower. If the 'End Rate Multiplier' is too high, there will still be a lot of ooze.<br>
+ <br>
+<a name="Pent Up Volume" id="Pent Up Volume"></a><h3>Pent Up Volume</h3>
+
+Default: 0.4 mm3<br>
+ <br>
+When the filament is stopped, there is a pent up volume of plastic that comes out afterwards. For best results, the 'Pent Up Volume' in dwindle should be set to that amount. If the 'Pent Up Volume' is too small, there will still be a lot of ooze. If the 'Pent Up Volume' is too large, the end of the thread will be thinner than the rest of the thread.<br>
+ <br>
+<a name="Slowdown Steps" id="Slowdown Steps"></a><h3>Slowdown Steps</h3>
+
+Default: 3<br>
+ <br>
+Dwindle reduces the feed rate and flow rate in steps so the thread will remain at roughly the same thickness until the end.  The "Slowdown Steps" setting is the number of steps, the more steps the smaller the variation in the thread thickness, but the larger the size of the resulting gcode file and the more time spent pausing between segments.<br>
+ <br>
+<a name="Slowdown Volume" id="Slowdown Volume"></a><h3>Slowdown Volume</h3>
+
+Default: 5 mm3<br>
+ <br>
+The 'Slowdown Volume' is the volume of the end of the thread where the feed and flow rates will be decreased. If the 'Slowdown Volume' is too small, there won't be enough time to get rid of the pent up plastic, so there will still be a lot of ooze. If the 'Slowdown Volume' is too large, a bit of time will be wasted because for a large portion of the thread, the feed rate will be slow. Overall, it is best to err on being too large, because too large would only waste machine time in production, rather than the more important string removal labor time.<br>
  <br>
 <a name="Examples" id="Examples"></a><h2>Examples</h2>
 <hr>

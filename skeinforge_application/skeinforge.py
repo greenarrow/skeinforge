@@ -230,9 +230,21 @@ import os
 import sys
 
 
-# dwindle check for close, document announce dwindle
-# document chamber: heated bed off at a layer http://blog.makerbot.com/2011/03/17/if-you-cant-stand-the-heat/
-# document announce volumeFraction
+# restore clip
+# multiple shell
+# voronoi average location intersection looped inset intercircles
+# check for last existing then remove unneeded fill code (getLastExistingFillLoops) from euclidean, add fill in penultimate loops, if there is no fill it should not use edge - skin should work
+# replace replace baseLayerThickness.. with baseLayerHeightMultiplier
+# change splodge to use volumeFraction
+# announce dwindle
+# announce fill sharpestAngle
+# announce inset volumeFraction
+# announce splodge volumeFraction
+# announce statistic extrusion diameter gone
+# announce vectorwrite
+#
+#
+#
 # question, should 'Infill Odd Layer Extra Rotation' be dropped
 # consolidate Object First Layer Flow
 #
@@ -241,8 +253,6 @@ import sys
 # subplugins like export static, maybe later mill cut and coil plugins, maybe later still export plugins & change file extension to output file extension  http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge
 #
 # backup demozendium links
-# replace replace baseLayerThickness.. with baseLayerHeightMultiplier
-# announce layer thickness with layer height
 #
 # unimportant
 # minor outline problem when an end path goes through a path, like in the letter A
@@ -260,9 +270,7 @@ import sys
 # set temperature in temperature
 # maybe rename geometry_plugins xml
 # maybe add carve preview, opening it up in browser
-# voronoi average location intersection looped inset intercircles
 # skin layers without something over the infill
-# check for last existing then remove unneeded fill code (getLastExistingFillLoops) from euclidean, add fill in penultimate loops, if there is no fill it should not use edge - skin should work
 # delete commented addInfillPerimeter
 # unpause slow flow rate instead of speeding feed rate
 # maybe in svgReader if loop intersection with previous union else add

@@ -212,7 +212,7 @@ class DimensionSkein:
 			self.parseBoundaries()
 		self.flowScaleSixty = 60.0 * self.layerHeight * self.edgeWidth / filamentPackingArea
 		if self.operatingFlowRate == None:
-			print('There is no operatingFlowRate so dimension will do nothing.')
+			print('Warning, there is no operatingFlowRate so dimension will do nothing.')
 			return gcodeText
 		self.restartDistance = self.repository.retractionDistance.value + self.repository.restartExtraDistance.value
 		self.extruderRetractionSpeedMinuteString = self.distanceFeedRate.getRounded(60.0 * self.repository.extruderRetractionSpeed.value)

@@ -12,6 +12,13 @@ http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Vectorwrite
 The default 'Activate Vectorwrite' checkbox is off.  When it is on, the functions described below will work when called from the skeinforge toolchain, when it is off, the functions will not be called from the toolchain.  The functions will still be called, whether or not the 'Activate Vectorwrite' checkbox is on, when vectorwrite is run directly.
 
 ==Settings==
+===Add Layer Template to SVG===
+Default is on.
+
+When selected, the layer template will be added to the svg output, which adds javascript control boxes.  So 'Add Layer Template to SVG' should be selected when the svg will be viewed in a browser.
+
+When off, no controls will be added, the svg output will only include the fabrication paths.  So 'Add Layer Template to SVG' should be deselected when the svg will be used by other software, like Inkscape.
+
 ===Add Loops===
 Default is on.
 
@@ -115,33 +122,38 @@ def writeOutput(fileName, fileNamePenultimate, fileNameSuffix, filePenultimateWr
 	getWindowAnalyzeFileGivenText( fileNameSuffix, gcodeText, repository )
 
 
-class SVGWriterVectorwrite( svg_writer.SVGWriter ):
+class SVGWriterVectorwrite(svg_writer.SVGWriter):
 	'A class to vectorwrite a carving.'
-	def addPaths( self, colorName, paths, transformString ):
+	def addPaths(self, colorName, paths, transformString):
 		'Add paths to the output.'
 		pathString = ''
 		for path in paths:
-			pathString += self.getSVGStringForPath(path) + ' '
-		if len( pathString ) < 1:
+			if len(path) > 0:
+				pathString += self.getSVGStringForPath(path) + ' '
+		if len(pathString) < 1:
 			return
-		pathElementNodeCopy = self.pathElementNode.getCopy('', self.pathElementNode.parentNode )
+		pathElementNodeCopy = self.pathElementNode.getCopy('', self.pathElementNode.parentNode)
 		pathCopyDictionary = pathElementNodeCopy.attributes
-		pathCopyDictionary['d'] = pathString[ : - 1 ]
+		pathCopyDictionary['d'] = pathString[: -1]
 		pathCopyDictionary['fill'] = 'none'
 		pathCopyDictionary['stroke'] = colorName
-		pathCopyDictionary['transform'] = transformString
+		if self.addLayerTemplateToSVG:
+			pathCopyDictionary['transform'] = transformString
 
-	def addLoopLayerToOutput( self, layerIndex, threadLayer ):
+	def addLoopLayerToOutput(self, layerIndex, threadLayer):
 		'Add rotated boundary layer to the output.'
-		settings.printProgress(self.layerIndex, 'vectorwrite')
-		self.addLayerBegin( layerIndex, threadLayer )
+		settings.printProgress(layerIndex, 'vectorwrite')
+		self.addLayerBegin(layerIndex, threadLayer)
 		transformString = self.getTransformString()
-		self.pathDictionary['d'] = self.getSVGStringForLoops( threadLayer.boundaryLoops )
-		self.pathDictionary['transform'] = transformString
-		self.addPaths('#fa0', threadLayer.innerPerimeters, transformString ) #orange
-		self.addPaths('#ff0', threadLayer.loops, transformString ) #yellow
-		self.addPaths('#f00', threadLayer.outerPerimeters, transformString ) #red
-		self.addPaths('#f5c', threadLayer.paths, transformString ) #light violetred
+		self.pathDictionary['d'] = self.getSVGStringForLoops(threadLayer.boundaryLoops)
+		if self.addLayerTemplateToSVG:
+			self.pathDictionary['transform'] = transformString
+		else:
+			del self.pathDictionary['transform']
+		self.addPaths('#fa0', threadLayer.innerPerimeters, transformString) #orange
+		self.addPaths('#ff0', threadLayer.loops, transformString) #yellow
+		self.addPaths('#f00', threadLayer.outerPerimeters, transformString) #red
+		self.addPaths('#f5c', threadLayer.paths, transformString) #light violetred
 
 
 class ThreadLayer:
@@ -191,6 +203,7 @@ class VectorwriteRepository:
 		self.activateVectorwrite = settings.BooleanSetting().getFromValue('Activate Vectorwrite', self, False )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( [ ('Gcode text files', '*.gcode') ], 'Open File to Write Vector Graphics for', self, '')
 		self.openWikiManualHelpPage = settings.HelpPage().getOpenFromAbsolute('http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Vectorwrite')
+		self.addLayerTemplateToSVG = settings.BooleanSetting().getFromValue('Add Layer Template to SVG', self, True)
 		self.addLoops = settings.BooleanSetting().getFromValue('Add Loops', self, True)
 		self.addPaths = settings.BooleanSetting().getFromValue('Add Paths', self, True)
 		self.addPerimeters = settings.BooleanSetting().getFromValue('Add Perimeters', self, True)
@@ -268,8 +281,8 @@ class VectorwriteSkein:
 		cornerMaximum.z += halfLayerThickness
 		cornerMinimum.z -= halfLayerThickness
 		svgWriter = SVGWriterVectorwrite(
-			True, cornerMaximum, cornerMinimum, self.decimalPlacesCarried, self.layerHeight, self.edgeWidth)
-		return svgWriter.getReplacedSVGTemplate(fileName, 'vectorwrite', self.threadLayers)
+			repository.addLayerTemplateToSVG.value, cornerMaximum, cornerMinimum, self.decimalPlacesCarried, self.layerHeight, self.edgeWidth)
+		return svgWriter.getReplacedSVGTemplate(fileName, self.threadLayers, 'vectorwrite')
 
 	def getCarveLayerHeight(self):
 		'Get the layer height.'

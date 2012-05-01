@@ -9,11 +9,6 @@ http://fabmetheus.crsndoo.com/wiki/index.php/Skeinforge_Statistic
 The default 'Activate Statistic' checkbox is on.  When it is on, the functions described below will work when called from the skeinforge toolchain, when it is off, the functions will not be called from the toolchain.  The functions will still be called, whether or not the 'Activate Statistic' checkbox is on, when statistic is run directly.
 
 ==Settings==
-===Extrusion Diameter over Thickness===
-Default is 1.25.
-
-The 'Extrusion Diameter over Thickness is the ratio of the extrusion diameter over the layer height, the default is 1.25.  The extrusion fill density ratio that is printed to the console, ( it is derived quantity not a parameter ) is the area of the extrusion diameter over the extrusion width over the layer height.  Assuming the extrusion diameter is correct, a high value means the filament will be packed tightly, and the object will be almost as dense as the filament.  If the fill density ratio is too high, there could be too little room for the filament, and the extruder will end up plowing through the extra filament.  A low fill density ratio means the filaments will be far away from each other, the object will be leaky and light.  The fill density ratio with the default extrusion settings is around 0.68.
-
 ===Print Statistics===
 Default is on.
 
@@ -164,7 +159,6 @@ class StatisticRepository:
 		self.material = settings.FloatSpin().getFromValue( 0.0, 'Material ($/kg):', self, 40.0, 20.0 )
 		settings.LabelSeparator().getFromRepository(self)
 		self.density = settings.FloatSpin().getFromValue( 500.0, 'Density (kg/m3):', self, 2000.0, 930.0 )
-		self.extrusionDiameterOverThickness = settings.FloatSpin().getFromValue( 1.0, 'Extrusion Diameter over Thickness (ratio):', self, 1.5, 1.25 )
 		self.fileNameInput = settings.FileNameInput().getFromFileName( [ ('Gcode text files', '*.gcode') ], 'Open File to Generate Statistics for', self, '')
 		self.printStatistics = settings.BooleanSetting().getFromValue('Print Statistics', self, True )
 		self.saveStatistics = settings.BooleanSetting().getFromValue('Save Statistics', self, False )
@@ -186,6 +180,7 @@ class StatisticSkein:
 		self.output = cStringIO.StringIO()
 		self.profileName = None
 		self.version = None
+		self.volumeFraction = None
 
 	def addLine(self, line):
 		"Add a line of text and a newline to the output."
@@ -242,9 +237,10 @@ class StatisticSkein:
 		roundedLow = euclidean.getRoundedPoint( self.cornerMinimum )
 		roundedExtent = euclidean.getRoundedPoint( extent )
 		axisString =  " axis extrusion starts at "
-		crossSectionArea = 0.9 * self.absoluteEdgeWidth * self.layerHeight # 0.9 if from the typical fill density
-		if self.extrusionDiameter != None:
-			crossSectionArea = math.pi / 4.0 * self.extrusionDiameter * self.extrusionDiameter
+		crossSectionArea = self.absoluteEdgeWidth * self.layerHeight
+		if self.volumeFraction != None:
+			crossSectionArea *= self.volumeFraction
+		self.extrusionDiameter = math.sqrt(4.0 * crossSectionArea / math.pi)
 		volumeExtruded = 0.001 * crossSectionArea * self.totalDistanceExtruded
 		mass = volumeExtruded / repository.density.value
 		machineTimeCost = repository.machineTime.value * self.totalBuildTime / 3600.0
@@ -275,9 +271,9 @@ class StatisticSkein:
 		self.addLine(' ')
 		self.addLine('Filament')
 		self.addLine( "Cross section area is %s mm2." % euclidean.getThreeSignificantFigures( crossSectionArea ) )
-		if self.extrusionDiameter != None:
-			self.addLine( "Extrusion diameter is %s mm." % euclidean.getThreeSignificantFigures( self.extrusionDiameter ) )
-		self.addLine('Extrusion fill density ratio is %s' % euclidean.getThreeSignificantFigures( crossSectionArea / self.absoluteEdgeWidth / self.layerHeight ) )
+		self.addLine('Extrusion diameter is %s mm.' % euclidean.getThreeSignificantFigures(self.extrusionDiameter))
+		if self.volumeFraction != None:
+			self.addLine('Volume fraction is %s.' % euclidean.getThreeSignificantFigures(self.volumeFraction))
 		self.addLine(' ')
 		self.addLine('Material')
 		self.addLine( "Mass extruded is %s grams." % euclidean.getThreeSignificantFigures( 1000.0 * mass ) )
@@ -380,7 +376,6 @@ class StatisticSkein:
 			self.extruderSpeed = gcodec.getDoubleAfterFirstLetter(splitLine[1])
 		elif firstWord == '(<layerHeight>':
 			self.layerHeight = float(splitLine[1])
-			self.extrusionDiameter = self.repository.extrusionDiameterOverThickness.value * self.layerHeight
 		elif firstWord == '(<operatingFeedRatePerSecond>':
 			self.operatingFeedRatePerSecond = float(splitLine[1])
 		elif firstWord == '(<edgeWidth>':
@@ -391,6 +386,8 @@ class StatisticSkein:
 			self.profileName = line.replace('(<profileName>', '').replace('</profileName>)', '').strip()
 		elif firstWord == '(<version>':
 			self.version = splitLine[1]
+		elif firstWord == '(<volumeFraction>':
+			self.volumeFraction = float(splitLine[1])
 
 
 def main():

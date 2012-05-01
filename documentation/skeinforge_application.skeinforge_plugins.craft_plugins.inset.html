@@ -27,6 +27,7 @@ The inset manual page is at:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;<a href="#Descending Area">Descending Area</a><br />
 &nbsp;&nbsp;<a href="#Overlap Removal Width over Perimeter Width">Overlap Removal Width over Perimeter Width</a><br />
 &nbsp;&nbsp;<a href="#Turn Extruder Heater Off at Shut Down">Turn Extruder Heater Off at Shut Down</a><br />
+&nbsp;&nbsp;<a href="#Volume Fraction">Volume Fraction</a><br />
 <a href="#Examples">Examples</a><br />
 <br />
 <a name="Settings" id="Settings"></a><h2>Settings</h2>
@@ -69,6 +70,12 @@ Defines the ratio of the overlap removal width over the edge width.  Any part of
 Default is on.<br>
  <br>
 When selected, the M104 S0 gcode line will be added to the end of the file to turn the extruder heater off by setting the extruder heater temperature to 0.<br>
+ <br>
+<a name="Volume Fraction" id="Volume Fraction"></a><h3>Volume Fraction</h3>
+
+Default: 0.82<br>
+ <br>
+The 'Volume Fraction' is the estimated volume of the thread compared to the box defined by the layer height and infill width. This is used in dwindle, splodge, and statistic. It is in inset because inset is a required extrusion tool, earlier in the chain than dwindle and splodge. In dwindle and splodge it is used to determine the filament volume, in statistic it is used to determine the extrusion diameter.<br>
  <br>
 <a name="Examples" id="Examples"></a><h2>Examples</h2>
 <hr>
